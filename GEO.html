@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>GEO</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #B0E0E6; }
+        #ui-layer {
+            position: absolute; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background-color: rgba(0, 0, 0, 0.4);
+            color: #ffffff; font-family: sans-serif; cursor: pointer;
+            z-index: 10; transition: opacity 0.3s;
+        }
+        .title { font-size: 32px; margin-bottom: 20px; font-weight: bold; text-shadow: 1px 1px 4px rgba(0,0,0,0.5); }
+        .instructions { font-size: 16px; line-height: 1.8; text-align: center; background: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px;}
+    </style>
+
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.150.1/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.150.1/examples/jsm/",
+          "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+      }
+    </script>
+</head>
+<body>
+    <div id="ui-layer">
+        <div class="title">CLICK TO START</div>
+    <!-- <div class="instructions">
+    </div> -->
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+        import * as CANNON from 'cannon-es';
+
+        // ==========================================
+        // 1. 初始化 Three.js 场景 & Cannon-es 物理世界
+        // ==========================================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xB0E0E6);
+        scene.fog = new THREE.FogExp2(0xB0E0E6, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const world = new CANNON.World({
+            gravity: new CANNON.Vec3(0, -128, 0)
+        });
+
+        // ==========================================
+        // 2. 光照系统
+        // ==========================================
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.7);
+        hemiLight.position.set(0, 200, 0);
+        scene.add(hemiLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        dirLight.position.set(100, 200, 50);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 2048;
+        dirLight.shadow.mapSize.height = 2048;
+        dirLight.shadow.camera.left = -200;
+        dirLight.shadow.camera.right = 200;
+        dirLight.shadow.camera.top = 200;
+        dirLight.shadow.camera.bottom = -200;
+        scene.add(dirLight);
+
+        // ==========================================
+        // 新增：星空系统与昼夜颜色预设
+        // ==========================================
+        const starsGeometry = new THREE.BufferGeometry();
+        const starsCount = 4000;
+        const posArray = new Float32Array(starsCount * 3);
+        // 生成一个包裹场景的巨大星空球体
+        for(let i = 0; i < starsCount * 3; i+=3) {
+            const r = 600 + Math.random() * 400; 
+            const theta = 2 * Math.PI * Math.random();
+            const phi = Math.acos(2 * Math.random() - 1);
+            posArray[i] = r * Math.sin(phi) * Math.cos(theta);
+            posArray[i+1] = r * Math.sin(phi) * Math.sin(theta);
+            posArray[i+2] = r * Math.cos(phi);
+        }
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const starsMaterial = new THREE.PointsMaterial({
+            size: 8,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0, // 初始透明度设为0（白天不显示）
+            sizeAttenuation: true
+        });
+        const starMesh = new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(starMesh);
+
+        // 颜色预设：Minecraft夜视药水风格（夜晚不黑，呈现偏亮的蓝青色）
+        const colorDaySky = new THREE.Color(0xB0E0E6); // 原本的白天颜色
+        const colorNightSky = new THREE.Color(0x3B698E); // 夜视风格：明亮的蓝灰色
+        const colorDayLight = new THREE.Color(0xffffff); 
+        const colorNightLight = new THREE.Color(0x88ccff); // 夜晚环境光带点荧光蓝
+
+        // ==========================================
+        // 3. 有机起伏地形 (数学模拟柏林噪声)
+        // ==========================================
+        function hash(x, z, seed) {
+            let h = seed ^ (x * 374761393) ^ (z * 668265263);
+            h = (h ^ (h >> 13)) * 1274126177;
+            return h ^ (h >> 16);
+        }
+        function gradient(ix, iz, seed) {
+            const h = hash(ix, iz, seed);
+            const angle = (h % 360) * Math.PI / 180;
+            return { x: Math.cos(angle), z: Math.sin(angle) };
+        }
+        function fade(t) { return t * t * t * (t * (t * 6 - 15) + 10); }
+        function lerp(a, b, t) { return a + t * (b - a); }
+        function dotGridGradient(ix, iz, x, z, seed) {
+            const g = gradient(ix, iz, seed);
+            const dx = x - ix;
+            const dz = z - iz;
+            return dx * g.x + dz * g.z;
+        }
+        function getNoise(x, z, seed) {
+            let scale1 = 0.5;
+            x *= scale1, z *= scale1;
+            const x0 = Math.floor(x); const x1 = x0 + 1;
+            const z0 = Math.floor(z); const z1 = z0 + 1;
+            const sx = fade(x - x0); const sz = fade(z - z0);
+            const n0 = dotGridGradient(x0, z0, x, z, seed);
+            const n1 = dotGridGradient(x1, z0, x, z, seed);
+            const ix0 = lerp(n0, n1, sx);
+            const n2 = dotGridGradient(x0, z1, x, z, seed);
+            const n3 = dotGridGradient(x1, z1, x, z, seed);
+            const ix1 = lerp(n2, n3, sx);
+            const value = lerp(ix0, ix1, sz);
+            let scale = 128;
+            let offset = 64;
+            return ((value + 1) / 2) * scale - offset;
+        }
+
+        const terrainSize = 1024;
+        const segments = 128;
+        const elementSize = terrainSize / segments;
+
+        const heightMatrix = [];
+        for (let i = 0; i <= segments; i++) {
+            heightMatrix.push([]);
+            for (let j = 0; j <= segments; j++) {
+                const h = getNoise(i * 0.1, j * 0.1, 1000000007); 
+                heightMatrix[i].push(h);
+            }
+        }
+
+        const terrainGeo = new THREE.PlaneGeometry(terrainSize, terrainSize, segments, segments);
+        terrainGeo.rotateX(-Math.PI / 2);
+        const posAttr = terrainGeo.attributes.position;
+        for (let i = 0; i <= segments; i++) {
+            for (let j = 0; j <= segments; j++) {
+                const vertexIndex = (j * (segments + 1)) + i;
+                posAttr.setY(vertexIndex, heightMatrix[i][segments - j]);
+            }
+        }
+        posAttr.needsUpdate = true;
+        terrainGeo.computeVertexNormals();
+
+        const terrainMat = new THREE.MeshStandardMaterial({ color: 0x6B8E23, flatShading: true, roughness: 0.8 });
+        const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+        terrainMesh.receiveShadow = true;
+        scene.add(terrainMesh);
+
+        const hfShape = new CANNON.Heightfield(heightMatrix, { elementSize: elementSize });
+        const hfBody = new CANNON.Body({ mass: 0 });
+        hfBody.addShape(hfShape);
+        hfBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+        hfBody.position.set(-terrainSize / 2, 0, terrainSize / 2);
+        world.addBody(hfBody);
+
+// ==========================================
+        // 4. 高级几何体池 & 物理逻辑系统
+        // ==========================================
+        const physicsObjects = []; 
+        const clock = new THREE.Clock();
+
+        // 1. 将预设固定大小的几何体改为“动态生成器”
+        const shapeGenerators = [
+            (size) => new THREE.BoxGeometry(size * 1.5, size * 1.5, size * 1.5),
+            (size) => new THREE.TetrahedronGeometry(size),
+            (size) => new THREE.OctahedronGeometry(size),
+            (size) => new THREE.IcosahedronGeometry(size),
+            (size) => new THREE.DodecahedronGeometry(size)
+        ];
+
+        // 2. 新增核心引擎：将 Three.js 视觉模型转换为 Cannon.js 精确凸多面体碰撞箱
+        function createExactShape(geometry) {
+            // Box 碰撞有底层优化，直接映射即可，性能最好
+            if (geometry.type === 'BoxGeometry') {
+                const { width, height, depth } = geometry.parameters;
+                return new CANNON.Box(new CANNON.Vec3(width / 2, height / 2, depth / 2));
+            }
+
+            const pos = geometry.attributes.position;
+            const rawFaces = [];
+            
+            // 步骤 A: 获取视觉模型的所有原始三角形面
+            if (geometry.index) {
+                for (let i = 0; i < geometry.index.count; i += 3) {
+                    rawFaces.push([geometry.index.getX(i), geometry.index.getX(i + 1), geometry.index.getX(i + 2)]);
+                }
+            } else {
+                for (let i = 0; i < pos.count; i += 3) {
+                    rawFaces.push([i, i + 1, i + 2]);
+                }
+            }
+
+            // 步骤 B: 顶点去重 (修复 Cannon-es 崩溃的核心)
+            const vertices = [];
+            const vertexMap = new Map();
+            const oldToNewIndex = new Int32Array(pos.count);
+
+            for (let i = 0; i < pos.count; i++) {
+                // 保留 3 位小数消除精度浮点误差
+                // 在 createExactShape 函数中，将 1000 改为 100000 (保留 5 位小数)
+                const vx = Math.round(pos.getX(i) * 100000) / 100000;
+                const vy = Math.round(pos.getY(i) * 100000) / 100000;
+                const vz = Math.round(pos.getZ(i) * 100000) / 100000;
+                const hash = `${vx},${vy},${vz}`;
+
+                if (!vertexMap.has(hash)) {
+                    vertexMap.set(hash, vertices.length);
+                    vertices.push(new CANNON.Vec3(vx, vy, vz));
+                }
+                oldToNewIndex[i] = vertexMap.get(hash);
+            }
+
+            // 步骤 C: 重建物理面，并过滤掉因为去重而变成一条线的“退化面”
+            const faces = [];
+            rawFaces.forEach(face => {
+                const v0 = oldToNewIndex[face[0]];
+                const v1 = oldToNewIndex[face[1]];
+                const v2 = oldToNewIndex[face[2]];
+                
+                // 确保三角形的三个顶点互不相同
+                if (v0 !== v1 && v1 !== v2 && v0 !== v2) {
+                    faces.push([v0, v1, v2]);
+                }
+            });
+
+            // 步骤 D: 生成完美的凸多面体碰撞箱
+            return new CANNON.ConvexPolyhedron({ vertices, faces });
+        }
+
+        const BEHAVIORS = { NORMAL: 0, STATIC: 1, ROTATING: 2, TOUCH_FALL: 3 };
+
+        function createRandomObject() {
+            // 3. 巨物随机化算法：幂函数保证大量中等物体，偶尔生成超级巨物 (尺寸可达 100+)
+            // const size = 3 + Math.pow(Math.random(), 6) * 100; 
+            const size = 16;
+
+            // 动态生成独立的几何体与精确碰撞箱
+            const geoGenerator = shapeGenerators[Math.floor(Math.random() * shapeGenerators.length)];
+            const geo = geoGenerator(size);
+            const shape = createExactShape(geo);
+            
+            const color = new THREE.Color().setHSL(Math.random(), 0.5 + Math.random() * 0.4, 0.6 + Math.random() * 0.3);
+            const mat = new THREE.MeshStandardMaterial({ color, flatShading: true });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            scene.add(mesh);
+
+            const behavior = Math.floor(Math.random() * 4);
+            
+            // 质量根据尺寸等比增加，保证巨物物理稳定且能轻易撞开小物体
+            let mass = (behavior === BEHAVIORS.NORMAL) ? (size * 1.5) : 0;
+            let type = CANNON.Body.DYNAMIC;
+            if (behavior === BEHAVIORS.STATIC || behavior === BEHAVIORS.TOUCH_FALL) type = CANNON.Body.STATIC;
+            if (behavior === BEHAVIORS.ROTATING) type = CANNON.Body.KINEMATIC;
+
+            // 生成高度动态附加 size，防止超级巨物一出生就卡在地表模型里
+            const spawnY = 64 + size + Math.random() * 256;
+            const body = new CANNON.Body({
+                mass: mass,
+                type: type,
+                shape: shape,
+                position: new CANNON.Vec3((Math.random() - 0.5) * 512, spawnY, (Math.random() - 0.5) * 512)
+            });
+
+            if (behavior === BEHAVIORS.NORMAL || behavior === BEHAVIORS.ROTATING) {
+                body.angularVelocity.set(Math.random()*2-1, Math.random()*2-1, Math.random()*2-1);
+            }
+
+            if (behavior === BEHAVIORS.TOUCH_FALL) {
+                body.addEventListener("collide", (e) => {
+                    if (body.type === CANNON.Body.STATIC && !body._needsWakeUp) {
+                        body._needsWakeUp = true; // 仅打上标记
+                    }
+                });
+            }
+
+            world.addBody(body);
+
+            const isPermanent = Math.random() > -1;
+            const lifespan = isPermanent ? Infinity : 10 + Math.random() * 20;
+
+            return { mesh, body, behavior, isPermanent, lifespan, birthTime: clock.getElapsedTime() };
+        }
+
+        for (let i = 0; i < 128; i++) {
+            physicsObjects.push(createRandomObject());
+        }
+
+        // ==========================================
+        // 5. 玩家控制
+        // ==========================================
+        const playerRadius = 2;
+        const playerBody = new CANNON.Body({
+            mass: 128,
+            shape: new CANNON.Sphere(playerRadius),
+            position: new CANNON.Vec3(0, 64, 0),
+            linearDamping: 0.9
+        });
+        world.addBody(playerBody);
+
+        const controls = new PointerLockControls(camera, document.body);
+        const uiLayer = document.getElementById('ui-layer');
+
+        uiLayer.addEventListener('click', () => controls.lock());
+        controls.addEventListener('lock', () => uiLayer.style.display = 'none');
+        controls.addEventListener('unlock', () => uiLayer.style.display = 'flex');
+
+        const keys = { KeyW: false, KeyA: false, KeyS: false, KeyD: false, Space: false};
+        document.addEventListener('keydown', (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
+        document.addEventListener('keyup', (e) => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
+
+        // ==========================================
+        // 6. 动画与物理渲染循环
+        // ==========================================
+        const movementSpeed = 128;
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = Math.min(clock.getDelta(), 0.1);
+            const currentTime = clock.getElapsedTime();
+
+            world.step(1/60, delta, 3);
+
+            // --- 新增：快速昼夜交替与旋转星空逻辑 ---
+            const skyColor = new THREE.Color();
+            const lightColor = new THREE.Color();
+            const dayNightCycle = 10; // 设定 10 秒为一个完整的昼夜周期
+            const cycleProgress = (currentTime % dayNightCycle) / dayNightCycle; 
+            const sunAngle = cycleProgress * Math.PI * 2; // 映射到 0~2PI (360度)
+
+            // 计算白天/黑夜混合比例 (使用 sin 平滑过渡) 
+            // 结果 1 为正午，0 为子夜
+            const mixRatio = (Math.sin(sunAngle - Math.PI/2) + 1) / 2;
+
+            // 1. 动态太阳旋转
+            dirLight.position.set(Math.cos(sunAngle) * 200, Math.sin(sunAngle) * 200, 50);
+
+            // 2. 动态天空、雾效颜色渐变
+            skyColor.lerpColors(colorNightSky, colorDaySky, mixRatio);
+            scene.background.copy(skyColor);
+            scene.fog.color.copy(skyColor);
+
+            // 3. 动态光照强度 (保证黑夜依然有很高的亮度以符合夜视风格)
+            lightColor.lerpColors(colorNightLight, colorDayLight, mixRatio);
+            hemiLight.color.copy(lightColor);
+            hemiLight.intensity = 0.6 + 0.3 * mixRatio; // 夜晚最低 0.6 亮度
+            dirLight.intensity = 0.2 + 0.7 * mixRatio;  // 夜晚定向光变弱
+
+            // 4. 星空旋转与透明度渐变 (已修改：覆盖全球面并绕X轴旋转)
+            starMesh.material.opacity = (1 - mixRatio) * 1.5; // 夜晚最大透明度
+            
+            // 确保不进行水平旋转 (停止绕Y轴)
+            // starMesh.rotation.y += 0; // 可以删除或注释掉这一行，以明确它不绕Y轴
+
+            // 设定主要旋转轴为 X 轴 (星星仿佛从地平线升起，通过头顶，再落下)
+            // 增加旋转速度以实现“快速”旋转，例如改为 0.35
+            starMesh.rotation.x += 0.35 * delta; 
+            
+            // 可以保留或加上些许Z轴倾斜，以增加非理想对称的复杂性
+            starMesh.rotation.z += 0.02 * delta;
+
+            // 逆序遍历，方便安全地剔除和生成物体
+            for (let i = physicsObjects.length - 1; i >= 0; i--) {
+                const obj = physicsObjects[i];
+
+                if (obj.body._needsWakeUp) {
+                    obj.body.mass = 16 * 1.5; // 你代码中固定的 size = 16
+                    obj.body.type = CANNON.Body.DYNAMIC;
+                    obj.body.updateMassProperties();
+                    obj.body.wakeUp();
+                    obj.body._needsWakeUp = false;
+                }
+
+                // 同步物理坐标
+                obj.mesh.position.copy(obj.body.position);
+                obj.mesh.quaternion.copy(obj.body.quaternion);
+
+                // 生命周期检查与刷新
+                if (!obj.isPermanent && (currentTime - obj.birthTime) > obj.lifespan) {
+                    scene.remove(obj.mesh);
+                    world.removeBody(obj.body);
+                    obj.mesh.material.dispose(); 
+                    obj.mesh.geometry.dispose(); // <--- 必须加上这一行释放内存！
+                    
+                    physicsObjects.splice(i, 1);
+                    physicsObjects.push(createRandomObject()); 
+                }
+            }
+
+            if (controls.isLocked) {
+                const forward = new THREE.Vector3();
+                controls.getDirection(forward);
+                forward.y = 0; forward.normalize();
+                
+                const right = new THREE.Vector3().crossVectors(camera.up, forward).normalize();
+                
+                if (keys.KeyW) playerBody.velocity.x += forward.x * movementSpeed * delta, playerBody.velocity.z += forward.z * movementSpeed * delta;
+                if (keys.KeyS) playerBody.velocity.x -= forward.x * movementSpeed * delta, playerBody.velocity.z -= forward.z * movementSpeed * delta;
+                if (keys.KeyA) playerBody.velocity.x += right.x * movementSpeed * delta, playerBody.velocity.z += right.z * movementSpeed * delta;
+                if (keys.KeyD) playerBody.velocity.x -= right.x * movementSpeed * delta, playerBody.velocity.z -= right.z * movementSpeed * delta;
+                if (keys.Space) playerBody.velocity.y += 4 * movementSpeed * delta; // 持续向上飞行
+            }
+
+            camera.position.copy(playerBody.position);
+            camera.position.y += 2; 
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
