@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penman's Typesetter by Silhouette</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-body: #f3f4f6;
+            --bg-panel: #ffffff;
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --accent: #000000;
+            --radius-md: 8px;
+            --radius-sm: 6px;
+            --font-stack: 'Inter', system-ui, -apple-system, sans-serif;
+            --transition: all 0.2s ease;
+        }
+
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0; padding: 0; height: 100vh;
+            font-family: var(--font-stack);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .app-container { display: flex; height: 100%; padding: 12px; gap: 12px; }
+
+        .sidebar-layout {
+            width: 320px; flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 12px;
+            height: 100%;
+        }
+
+        .panel-box {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 20px;
+        }
+
+        .panel-main {
+            display: flex; flex-direction: column; gap: 24px;
+            flex-grow: 1; overflow-y: auto;
+        }
+
+        .panel-footer {
+            flex-shrink: 0;
+            display: flex; flex-direction: column; gap: 10px;
+            padding: 16px 20px; 
+        }
+
+        .panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-bottom: 12px; border-bottom: 1px solid var(--border-color);
+            height: 40px; 
+        }
+        .panel-title { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -0.3px; line-height: 1; }
+        
+        .btn {
+            background: var(--bg-body); border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 0 10px;
+            height: 32px; 
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            color: var(--text-main); transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            text-decoration: none;
+            line-height: 1;
+        }
+        .btn:hover { background: #e5e7eb; }
+        .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+        .btn-primary:hover { background: #333; }
+
+        #langBtn { width: 56px; height: 26px; padding: 0; }
+
+        .property-group { display: flex; flex-direction: column; gap: 12px; }
+        .property-title {
+            font-size: 11px; color: var(--text-muted);
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+            display: flex; justify-content: space-between; align-items: center;
+            height: 16px; 
+            line-height: 16px;
+        }
+
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; font-size: 13px; padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background-color: #fafafa; color: var(--text-main);
+            transition: var(--transition); font-family: var(--font-stack); 
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            outline: none; 
+            border-color: #a1a1aa; 
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(228, 228, 231, 0.6);
+        }
+        
+        textarea { resize: vertical; min-height: 70px; line-height: 1.5; white-space: pre; }
+        
+        .custom-select-container {
+            position: relative; width: 100%; font-family: var(--font-stack);
+        }
+        .custom-select-trigger {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; font-size: 13px; padding: 8px 12px; height: 35px;
+            border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+            background-color: #fafafa; color: var(--text-main); font-weight: 500;
+            cursor: pointer; transition: var(--transition);
+        }
+        .custom-select-trigger:hover { border-color: #d1d5db; background-color: #f9fafb; }
+        
+        .custom-select-trigger.active { border-color: #a1a1aa; background-color: #ffffff; }
+        
+        .custom-select-trigger svg {
+            width: 16px; height: 16px; stroke: #6b7280; transition: transform 0.3s ease;
+        }
+        .custom-select-trigger.active svg { transform: rotate(180deg); }
+        
+        .custom-options {
+            position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+            background-color: #ffffff; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); z-index: 100;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            opacity: 0; visibility: hidden; transform: translateY(-5px); transition: all 0.2s ease;
+        }
+        .custom-options.open { opacity: 1; visibility: visible; transform: translateY(0); }
+        
+        .custom-option {
+            padding: 10px 12px; font-size: 13px; font-weight: 500; color: var(--text-main);
+            cursor: pointer; transition: background-color 0.15s ease;
+        }
+        .custom-option:first-child { border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm); }
+        .custom-option:last-child { border-bottom-left-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm); }
+        .custom-option:hover { background-color: #f3f4f6; }
+        .custom-option.selected { background-color: #e5e7eb; color: var(--accent); }
+
+        input[type="range"] {
+            -webkit-appearance: none; width: 100%; background: transparent; padding: 0; border: none; outline: none;
+        }
+        input[type="range"]:focus { outline: none; box-shadow: none; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
+            background: var(--accent); cursor: pointer; margin-top: -5px;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: var(--border-color); border-radius: 2px;
+        }
+
+        .file-upload-wrapper { display: flex; gap: 8px; }
+        .file-upload-box { position: relative; flex-grow: 1; }
+        .file-upload-box input[type="file"] {
+            position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer;
+        }
+        .btn-upload {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 32px; padding: 0 10px;
+            background: var(--bg-panel); border: 1px dashed #bbb;
+            border-radius: var(--radius-sm); font-size: 12px;
+            color: var(--text-muted); transition: var(--transition);
+        }
+        .file-upload-box:hover .btn-upload { border-color: var(--accent); color: var(--accent); }
+
+        .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: center; } 
+        
+        .block-label { 
+            font-size: 12px; color: var(--text-main); font-weight: 500; 
+            display: flex; align-items: center; 
+            height: 16px; 
+            margin-bottom: 6px; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .label-with-value { justify-content: flex-start; gap: 6px; }
+        .val-text { font-weight: 600; color: var(--accent); }
+
+        .line-offset-container {
+            background: #fafafa; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); padding: 8px;
+            display: flex; flex-direction: column; gap: 8px;
+            max-height: 120px; overflow-y: auto;
+        }
+        .line-offset-item { display: flex; align-items: center; gap: 8px; }
+        .line-offset-item span { font-size: 11px; color: var(--text-muted); width: 24px; text-align: right; }
+
+        #scaleInfo {
+            font-size: 11.5px; color: var(--text-muted); background: var(--bg-body); 
+            border-radius: var(--radius-sm); margin-top: 4px; font-family: monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            height: 34px; 
+            display: flex; align-items: center; padding: 0 10px;
+        }
+
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; height: 18px;}
+        .toggle-label { font-size: 12.5px; color: var(--text-main); cursor: pointer; display: flex; align-items: center; height: 100%;}
+        .switch { position: relative; display: inline-block; width: 32px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 18px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 14px; width: 14px;
+            left: 2px; bottom: 2px; background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent); }
+        input:checked + .slider:before { transform: translateX(14px); }
+
+        .panel-right {
+            flex-grow: 1; background-color: var(--bg-panel);
+            border: 1px solid var(--border-color); border-radius: var(--radius-md);
+            position: relative; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            user-select: none;
+        }
+        canvas {
+            display: block; background-color: transparent; cursor: crosshair;
+            font-variant-ligatures: contextual; font-feature-settings: "calt" 1, "liga" 1; 
+        }
+
+        .is-panning canvas {
+            cursor: grabbing !important;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <div class="sidebar-layout">
+        
+        <div class="panel-box panel-main">
+            <div class="panel-header">
+                <h2 class="panel-title" data-i18n="title">Penman's Typesetter</h2>
+                <button class="btn" id="langBtn">中文</button>
+            </div>
+            
+            <div class="property-group">
+                <span class="property-title" data-i18n="section_font">Font Source</span>
+                <div class="file-upload-wrapper">
+                    <div class="file-upload-box">
+                        <div class="btn-upload" id="uploadLabel" data-i18n="upload_btn">Upload File...</div>
+                        <input type="file" id="fontInput" accept=".ttf, .otf">
+                    </div>
+                    <button class="btn" id="presetBtn" data-i18n="preset_btn" title="SilhouetteRoundhand">Default</button>
+                </div>
+            </div>
+
+            <div class="property-group">
+                <span class="property-title" data-i18n="section_text">Content & Layout</span>
+                <textarea id="textInput">Oh you look so beautiful tonight&#10;In the city of blinding lights</textarea>
+                
+                <div class="grid-row" style="margin-top: 4px;">
+                    <div>
+                        <label class="block-label label-with-value"><span data-i18n="label_size">Size: </span><span id="sizeVal" class="val-text">120</span></label>
+                        <input type="range" id="sizeSlider" min="40" max="400" value="120">
+                    </div>
+                    <div>
+                        <label class="block-label label-with-value"><span data-i18n="label_lh">Line H: </span><span id="lhVal" class="val-text">1.5</span></label>
+                        <input type="range" id="lhSlider" min="0.5" max="3" step="0.1" value="1.5">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block-label" data-i18n="label_align">Alignment</label>
+                    <div class="custom-select-container" id="alignSelectContainer">
+                        <div class="custom-select-trigger" id="alignSelectTrigger">
+                            <span id="alignSelectText" data-i18n="align_center">Center</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                        <div class="custom-options" id="alignSelectOptions">
+                            <div class="custom-option" data-value="left" data-i18n="align_left">Left</div>
+                            <div class="custom-option selected" data-value="center" data-i18n="align_center">Center</div>
+                            <div class="custom-option" data-value="right" data-i18n="align_right">Right</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="alignSelect" value="center">
+                </div>
+
+                <div>
+                    <label class="block-label" data-i18n="label_offsets">Line Offsets</label>
+                    <div class="line-offset-container" id="offsetContainer"></div>
+                    <button class="btn" id="resetOffsetsBtn" style="width:100%; margin-top: 8px;" data-i18n="btn_reset">Reset</button>
+                </div>
+            </div>
+
+            <div class="property-group">
+                <span class="property-title" data-i18n="section_calib">Calibration</span>
+                <div class="grid-row">
+                    <div>
+                        <label class="block-label" data-i18n="label_glyph">Ref. Glyph</label>
+                        <input type="text" id="calibChar" value="n" maxlength="1">
+                    </div>
+                    <div>
+                        <label class="block-label" data-i18n="label_width">Actual Width (mm)</label>
+                        <input type="number" id="calibMm" value="5" step="0.1">
+                    </div>
+                </div>
+                <div id="scaleInfo" data-i18n="status_waiting">Font not loaded...</div>
+            </div>
+
+            <div class="property-group">
+                <span class="property-title" data-i18n="section_overlay">Measure</span>
+                <div class="toggle-row">
+                    <span class="toggle-label" data-i18n="overlay_center">Center Axis</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showCenters" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row">
+                    <span class="toggle-label" data-i18n="overlay_space">By Word</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showSpaces" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="panel-box panel-footer">
+            <button class="btn" id="exportBtn" style="width: 100%;" data-i18n="btn_export">Export to PNG</button>
+            <a href="https://sil-z.github.io/" target="_blank" class="btn btn-primary" style="width: 100%;" data-i18n="btn_website">Personal Website</a>
+        </div>
+
+    </div>
+
+    <div class="panel-right" id="canvasContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+</div>
+
+<script>
+    const i18nDict = {
+        en: {
+            title: "Penman's Typesetter", section_font: "Font Source", upload_btn: "Upload File...", preset_btn: "Default",
+            section_text: "Content & Layout", label_size: "Size: ", label_lh: "Line H: ", label_align: "Alignment",
+            align_left: "Left", align_center: "Center", align_right: "Right", label_offsets: "Line Offsets", btn_reset: "Reset",
+            section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Actual Width (mm)",
+            status_waiting: "Font not loaded...", status_fetching: "Fetching default...", status_parsing: "Parsing font data...",
+            status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Warning: Metric unavailable",
+            section_overlay: "Measure", overlay_center: "Center Axis", overlay_space: "By Word", btn_export: "Export to PNG",
+            btn_website: "Personal Website"
+        },
+        zh: {
+            title: "书法字体排版器", section_font: "字体源", upload_btn: "上传文件...", preset_btn: "加载默认",
+            section_text: "内容与排版", label_size: "字号: ", label_lh: "行距: ", label_align: "对齐方式",
+            align_left: "左对齐", align_center: "居中", align_right: "右对齐", label_offsets: "逐行偏移", btn_reset: "重置偏移",
+            section_calib: "校准", label_glyph: "基准字形", label_width: "实际尺寸 (mm)",
+            status_waiting: "字体未导入...", status_fetching: "下载默认字体...", status_parsing: "解析字体数据...",
+            status_error: "加载失败", scale_format: "比例: 1px ≈ {val} mm", scale_warn: "警告: 无法读取",
+            section_overlay: "测量", overlay_center: "中心轴线", overlay_space: "逐词", btn_export: "导出 PNG",
+            btn_website: "个人主页"
+        }
+    };
+
+    let currentLang = 'en';
+    let isExporting = false; 
+    let currentOpentypeFont = null;
+    let fontFileName = "";
+    let isFontLoaded = false;
+    let mmPerPixel = 0.1; 
+    let selectedPoint = null;
+    let lineData = [];
+    let customOffsets = []; 
+
+    const canvasContainer = document.getElementById('canvasContainer');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const textInput = document.getElementById('textInput');
+    const calibCharInput = document.getElementById('calibChar');
+    const calibMmInput = document.getElementById('calibMm');
+    const scaleInfo = document.getElementById('scaleInfo');
+    const uploadLabel = document.getElementById('uploadLabel');
+    const sizeSlider = document.getElementById('sizeSlider');
+    const lhSlider = document.getElementById('lhSlider');
+    const alignSelectInput = document.getElementById('alignSelect'); 
+    const offsetContainer = document.getElementById('offsetContainer');
+    const showCenters = document.getElementById('showCenters');
+    const showSpaces = document.getElementById('showSpaces');
+
+    const alignContainer = document.getElementById('alignSelectContainer');
+    const alignTrigger = document.getElementById('alignSelectTrigger');
+    const alignOptionsPanel = document.getElementById('alignSelectOptions');
+    const alignText = document.getElementById('alignSelectText');
+    const customOptionsList = document.querySelectorAll('.custom-option');
+
+    function saveSettings() {
+        const state = {
+            text: textInput.value,
+            size: sizeSlider.value,
+            lh: lhSlider.value,
+            align: alignSelectInput.value,
+            offsets: customOffsets,
+            calibChar: calibCharInput.value,
+            calibMm: calibMmInput.value,
+            showCenters: showCenters.checked,
+            showSpaces: showSpaces.checked,
+            lang: currentLang
+        };
+        localStorage.setItem('penmanSettings', JSON.stringify(state));
+    }
+
+    function loadSettings() {
+        const saved = localStorage.getItem('penmanSettings');
+        if (saved) {
+            try {
+                const state = JSON.parse(saved);
+                if (state.text !== undefined) textInput.value = state.text;
+                if (state.size !== undefined) { sizeSlider.value = state.size; document.getElementById('sizeVal').textContent = state.size; }
+                if (state.lh !== undefined) { lhSlider.value = state.lh; document.getElementById('lhVal').textContent = state.lh; }
+                if (state.align !== undefined) {
+                    alignSelectInput.value = state.align;
+                    customOptionsList.forEach(opt => {
+                        if (opt.getAttribute('data-value') === state.align) {
+                            opt.classList.add('selected');
+                        } else {
+                            opt.classList.remove('selected');
+                        }
+                    });
+                }
+                if (state.offsets !== undefined) customOffsets = state.offsets;
+                if (state.calibChar !== undefined) calibCharInput.value = state.calibChar;
+                if (state.calibMm !== undefined) calibMmInput.value = state.calibMm;
+                if (state.showCenters !== undefined) showCenters.checked = state.showCenters;
+                if (state.showSpaces !== undefined) showSpaces.checked = state.showSpaces;
+                if (state.lang !== undefined) currentLang = state.lang;
+            } catch(e) {}
+        }
+    }
+
+    function updateLanguage() {
+        document.getElementById('langBtn').textContent = currentLang === 'en' ? '中文' : 'EN';
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (i18nDict[currentLang][key]) el.textContent = i18nDict[currentLang][key];
+        });
+        if (currentOpentypeFont && fontFileName) document.getElementById('uploadLabel').textContent = fontFileName;
+        
+        const activeOptionKey = document.querySelector('.custom-option.selected').getAttribute('data-i18n');
+        document.getElementById('alignSelectText').textContent = i18nDict[currentLang][activeOptionKey];
+        
+        updateScaleAndRender();
+    }
+    
+    document.getElementById('langBtn').addEventListener('click', () => {
+        currentLang = currentLang === 'en' ? 'zh' : 'en';
+        updateLanguage();
+    });
+
+    alignTrigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        alignOptionsPanel.classList.toggle('open');
+        alignTrigger.classList.toggle('active');
+    });
+
+    customOptionsList.forEach(option => {
+        option.addEventListener('click', (e) => {
+            e.stopPropagation();
+            customOptionsList.forEach(opt => opt.classList.remove('selected'));
+            option.classList.add('selected');
+            
+            const value = option.getAttribute('data-value');
+            const textKey = option.getAttribute('data-i18n');
+            
+            alignSelectInput.value = value;
+            alignText.setAttribute('data-i18n', textKey);
+            alignText.textContent = i18nDict[currentLang][textKey];
+
+            alignOptionsPanel.classList.remove('open');
+            alignTrigger.classList.remove('active');
+            render();
+        });
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!alignContainer.contains(e.target)) {
+            alignOptionsPanel.classList.remove('open');
+            alignTrigger.classList.remove('active');
+        }
+    });
+
+    document.getElementById('fontInput').addEventListener('change', handleFontUpload);
+    document.getElementById('presetBtn').addEventListener('click', loadPresetFont);
+    document.getElementById('exportBtn').addEventListener('click', exportPNG);
+    document.getElementById('resetOffsetsBtn').addEventListener('click', () => { customOffsets = []; updateOffsetsUI(); render(); });
+    
+    showCenters.addEventListener('change', render);
+    showSpaces.addEventListener('change', render);
+    calibCharInput.addEventListener('input', updateScaleAndRender);
+    calibMmInput.addEventListener('input', updateScaleAndRender);
+    
+    let isPanning = false;
+    let startX, startY, scrollLeft, scrollTop;
+
+    canvasContainer.addEventListener('mousedown', (e) => {
+        if (e.button === 1) { 
+            e.preventDefault();
+            isPanning = true;
+            canvasContainer.classList.add('is-panning');
+            startX = e.clientX;
+            startY = e.clientY;
+            scrollLeft = canvasContainer.scrollLeft;
+            scrollTop = canvasContainer.scrollTop;
+        } else if (e.button === 0) { 
+            handleCanvasClick(e);
+        }
+    });
+
+    canvasContainer.addEventListener('mousemove', (e) => {
+        if (!isPanning) return;
+        e.preventDefault();
+        const walkX = e.clientX - startX;
+        const walkY = e.clientY - startY;
+        canvasContainer.scrollLeft = scrollLeft - walkX;
+        canvasContainer.scrollTop = scrollTop - walkY;
+    });
+
+    const stopPanning = () => {
+        isPanning = false;
+        canvasContainer.classList.remove('is-panning');
+    };
+
+    canvasContainer.addEventListener('mouseup', (e) => { if (e.button === 1) stopPanning(); });
+    canvasContainer.addEventListener('mouseleave', stopPanning);
+
+    textInput.addEventListener('input', () => { 
+        selectedPoint = null; 
+        updateOffsetsUI(); 
+        render(); 
+    });
+
+    sizeSlider.addEventListener('input', (e) => {
+        document.getElementById('sizeVal').textContent = e.target.value;
+        updateScaleAndRender(); 
+    });
+
+    lhSlider.addEventListener('input', (e) => {
+        document.getElementById('lhVal').textContent = e.target.value;
+        render();
+    });
+
+    const resizeObserver = new ResizeObserver(() => { render(); });
+    resizeObserver.observe(canvasContainer);
+
+    function updateOffsetsUI() {
+        const lines = textInput.value.split('\n');
+        while(customOffsets.length < lines.length) customOffsets.push(0);
+        while(customOffsets.length > lines.length) customOffsets.pop();
+
+        offsetContainer.innerHTML = '';
+        lines.forEach((line, i) => {
+            const item = document.createElement('div');
+            item.className = 'line-offset-item';
+            item.innerHTML = `
+                <span>L${i+1}</span>
+                <input type="range" min="-300" max="300" value="${customOffsets[i]}" data-idx="${i}">
+            `;
+            const slider = item.querySelector('input');
+            slider.addEventListener('input', (e) => {
+                customOffsets[i] = parseInt(e.target.value);
+                render();
+            });
+            offsetContainer.appendChild(item);
+        });
+    }
+
+    async function handleFontUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        fontFileName = file.name;
+        uploadLabel.textContent = fontFileName;
+        await loadFontFromArrayBuffer(await file.arrayBuffer());
+    }
+
+    async function loadPresetFont() {
+        scaleInfo.textContent = i18nDict[currentLang].status_fetching;
+        scaleInfo.style.color = "var(--text-muted)";
+        fontFileName = "SilhouetteRoundhand.otf";
+        uploadLabel.textContent = fontFileName;
+        
+        try {
+            const response = await fetch('https://sil-z.github.io/assets/fonts/SilhouetteRoundhand.otf');
+            if (!response.ok) throw new Error();
+            const buffer = await response.arrayBuffer();
+            await loadFontFromArrayBuffer(buffer);
+        } catch (err) {
+            scaleInfo.textContent = i18nDict[currentLang].status_error;
+            scaleInfo.style.color = "#ef4444";
+        }
+    }
+
+    async function loadFontFromArrayBuffer(arrayBuffer) {
+        scaleInfo.textContent = i18nDict[currentLang].status_parsing;
+        try {
+            currentOpentypeFont = opentype.parse(arrayBuffer);
+            const fontFace = new FontFace('CustomRenderFont', arrayBuffer);
+            await fontFace.load();
+            document.fonts.add(fontFace);
+            isFontLoaded = true;
+            scaleInfo.style.color = "var(--text-main)";
+            updateScaleAndRender();
+        } catch (err) {
+            scaleInfo.textContent = i18nDict[currentLang].status_error;
+            scaleInfo.style.color = "#ef4444";
+        }
+    }
+
+    function updateScaleAndRender() {
+        const currentFontSize = parseInt(sizeSlider.value);
+        const t = i18nDict[currentLang];
+
+        if (!currentOpentypeFont) {
+            mmPerPixel = 10 / currentFontSize;
+            render();
+            return;
+        }
+        
+        const char = calibCharInput.value;
+        const mm = parseFloat(calibMmInput.value);
+        
+        if (char && !isNaN(mm) && mm > 0) {
+            const glyph = currentOpentypeFont.charToGlyph(char);
+            if (glyph && glyph.advanceWidth > 0) {
+                const mmPerFontUnit = mm / glyph.advanceWidth;
+                const pixelsPerFontUnit = currentFontSize / currentOpentypeFont.unitsPerEm;
+                mmPerPixel = mmPerFontUnit / pixelsPerFontUnit;
+                
+                scaleInfo.textContent = t.scale_format.replace('{val}', mmPerPixel.toFixed(4));
+                scaleInfo.style.color = "var(--text-main)";
+            } else {
+                scaleInfo.textContent = t.scale_warn;
+                scaleInfo.style.color = "#ef4444";
+            }
+        }
+        selectedPoint = null;
+        render();
+    }
+
+    function render() {
+        const rect = canvasContainer.getBoundingClientRect();
+        if (rect.width === 0 || rect.height === 0) return;
+
+        const lines = textInput.value.split('\n');
+        const fontSize = parseInt(sizeSlider.value);
+        const lhRatio = parseFloat(lhSlider.value);
+        const alignment = alignSelectInput.value; 
+        const padding = 60; 
+        
+        const fontString = `${fontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+        
+        ctx.font = fontString;
+        let maxTextWidth = 0;
+        lines.forEach(line => {
+            if (line) {
+                const w = ctx.measureText(line).width;
+                if (w > maxTextWidth) maxTextWidth = w;
+            }
+        });
+
+        let maxAbsOffset = Math.max(...customOffsets.map(Math.abs), 0);
+        const contentWidth = Math.max(rect.width, maxTextWidth + padding * 2 + maxAbsOffset * 2);
+        const contentHeight = Math.max(rect.height, lines.length * fontSize * lhRatio + padding * 2);
+        
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = contentWidth * dpr;
+        canvas.height = contentHeight * dpr;
+        canvas.style.width = `${contentWidth}px`;
+        canvas.style.height = `${contentHeight}px`;
+
+        ctx.save();
+        ctx.scale(dpr, dpr);
+        
+        ctx.clearRect(0, 0, contentWidth, contentHeight);
+
+        if (!isExporting) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, contentWidth, contentHeight);
+        }
+
+        ctx.font = fontString;
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillStyle = '#111827';
+
+        lineData = [];
+        let currentY = fontSize + padding;
+
+        lines.forEach((line, index) => {
+            if (!line) { currentY += fontSize * lhRatio; return; }
+
+            const totalWidthPx = ctx.measureText(line).width;
+            let startX = 0;
+
+            if (alignment === 'center') {
+                startX = (contentWidth - totalWidthPx) / 2;
+            } else if (alignment === 'right') {
+                startX = contentWidth - totalWidthPx - padding;
+            } else { 
+                startX = padding;
+            }
+
+            startX += customOffsets[index] || 0;
+
+            ctx.fillText(line, startX, currentY);
+
+            lineData.push({
+                index: index, yMin: currentY - fontSize, yMax: currentY + 30,
+                startX: startX, endX: startX + totalWidthPx, baseY: currentY
+            });
+
+            if (showSpaces.checked) {
+                const words = line.split(' ');
+                let currentWordX = startX;
+                for (let i = 0; i < words.length; i++) {
+                    const word = words[i];
+                    const wordWidth = ctx.measureText(word).width;
+                    const markerX = currentWordX + wordWidth;
+                    
+                    if (word.length > 0 || i === words.length - 1) {
+                        const distMm = (markerX - startX) * mmPerPixel;
+                        drawMarker(markerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
+                    }
+                    
+                    if (i < words.length - 1) {
+                        currentWordX += ctx.measureText(word + ' ').width;
+                    }
+                }
+            }
+
+            if (showCenters.checked) {
+                const centerX = startX + totalWidthPx / 2;
+                const distMm = (totalWidthPx / 2) * mmPerPixel;
+                drawMarker(centerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#ef4444', fontSize);
+            }
+
+            currentY += fontSize * lhRatio;
+        });
+
+        if (selectedPoint) {
+            drawMarker(selectedPoint.x, selectedPoint.y, `${selectedPoint.mm.toFixed(2)} mm`, '#10b981', fontSize, true);
+        }
+
+        ctx.restore();
+        
+        saveSettings();
+    }
+
+    function drawMarker(x, y, text, color, baseFontSize, isCustom = false) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(x, y - Math.min(baseFontSize * 0.35, 80)); 
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isCustom ? 2 : 1.5;
+        ctx.setLineDash(isCustom ? [] : [4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]); 
+
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.font = '500 12px system-ui, -apple-system, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'white';
+        ctx.strokeText(text, x, y + 20);
+        ctx.fillText(text, x, y + 20);
+        ctx.restore();
+    }
+
+    function handleCanvasClick(e) {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const clickedLine = lineData.find(line => mouseY >= line.yMin && mouseY <= line.yMax);
+
+        if (clickedLine) {
+            const clampedX = Math.max(clickedLine.startX, Math.min(mouseX, clickedLine.endX));
+            const distPx = clampedX - clickedLine.startX;
+            const distMm = distPx * mmPerPixel;
+            selectedPoint = { x: clampedX, y: clickedLine.baseY + 15, mm: distMm };
+            render();
+        }
+    }
+
+    function exportPNG() {
+        isExporting = true;
+        render(); 
+        
+        const dataURL = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.download = `Typography_Export_${Date.now()}.png`;
+        link.href = dataURL;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        isExporting = false;
+        render();
+    }
+
+    loadSettings();
+    updateLanguage(); 
+    updateOffsetsUI(); 
+    updateScaleAndRender(); 
+</script>
+
+</body>
+</html>
