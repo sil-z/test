@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0c0e14;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 酷炫的背景文字样式 */
+        .bg-text {
+            position: absolute;
+            
+            /* 使用 Jost 替换，保持几何科幻感 */
+            font-family: 'Jost', sans-serif;
+            font-size: 3vw; /* Jost 字形稍显内敛，稍微放大一点点 */
+            font-weight: 1; /* 使用 900 极粗体，增加视觉分量 */
+            
+            letter-spacing: 1.5vw;
+            padding-left: 1.5vw; 
+            
+            /* 线框与发光效果保持不变 */
+            color: transparent; 
+            -webkit-text-stroke: 2px rgba(78, 205, 196, 0.3); 
+            text-shadow: 0 0 30px rgba(142, 227, 240, 0.1);
+            
+            pointer-events: none; 
+            user-select: none;
+            z-index: 0;
+            
+            animation: breathe 5s ease-in-out infinite;
+        }
+
+        @keyframes breathe {
+            0%, 100% { 
+                opacity: 0.7; 
+                text-shadow: 0 0 30px rgba(142, 227, 240, 0.05); 
+            }
+            50% { 
+                opacity: 1; 
+                text-shadow: 0 0 50px rgba(142, 227, 240, 0.4); 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-text">CLICK TO EXPLODE</div>
+
+    <script>
+        class ParticleNetwork {
+            constructor(options = {}) {
+                const defaultOptions = {
+                    // 1. 基础挂载设置
+                    container: document.body,
+                    zIndex: 0,
+                    
+                    // 2. 粒子基础属性
+                    particleCount: 200,                // 粒子总数量
+                    particleRadius: 1.5,                 // 粒子半径
+                    initialVelocity: 1,              // 粒子初始速度的最大范围
+                    colors: ['#8ee3f0', '#4ecdc4', '#2b9eac'], // 粒子调色板
+                    
+                    // 3. 基础物理与环境
+                    dampingThreshold: 1,               // 触发阻尼减速的速度平方阈值
+                    dampingFactor: 0.99,               // 阻尼系数（越小减速越快）
+                    
+                    // 4. 粒子间连线效果
+                    connectDistance: 180,              // 产生连线的最大距离
+                    connectOpacityMax: 0.15,           // 连线的最清晰透明度
+                    connectLineWidth: 1,               // 连线粗细
+                    
+                    // 5. 鼠标隐形捕获力场
+                    mouseRadius: 150,                  // 鼠标捕获力场的半径
+                    mouseBuffer: 10,                   // 边界缓冲区大小（防止粒子卡墙抖动）
+                    
+                    // 6. 爆炸前摇：蓄力吸附阶段
+                    implosionFrames: 300,               // 蓄力吸附持续的帧数（时间长度）
+                    implosionPullRadius: 400,          // 蓄力时能吸附到的最远粒子距离
+                    implosionPullForce: 0.1,           // 向内吸附的拉力大小
+                    implosionRingMaxRadius: 120,       // 视觉收缩线圈的初始最大半径
+                    implosionRingLineWidth: 1.5,       // 视觉收缩线圈的粗细
+                    implosionHideRadius: 10,       
+
+                    // 7. 瞬间爆炸阶段
+                    explosionBlastRadius: 250,         // 爆炸冲击波能推开粒子的最远距离
+                    explosionBlastForce: 25,           // 爆炸中心最大的弹开推力
+                    explosionCooldown: 80,             // 爆炸后的无敌帧（鼠标失去捕获力的时间）
+                    
+                    // 8. 爆炸扩散波纹视觉
+                    explosionRippleSpeed: 12,          // 波纹向外扩散的速度
+                    explosionRippleFade: 0.03,         // 波纹透明度消失的速度
+                    explosionRippleLineWidth: 2,        // 波纹线条粗细
+
+                    // 9. 【新增】粒子间微小斥力
+                    particleRepulsionRadius: 8,       // 粒子间产生斥力的最大距离 (建议小于连线距离)
+                    particleRepulsionForce: 0.02       // 斥力的强度 (微调此项可改变粒子的“拥挤度”)
+                };
+
+                this.opts = { ...defaultOptions, ...options };
+                this.container = this.opts.container;
+                this.zIndex = this.opts.zIndex;
+                
+                this.particles = [];
+                this.explosions = []; 
+                this.mouse = { x: null, y: null };
+                this.mouseCooldown = 0;  
+                this.implosionTimer = 0; 
+                this.clickX = 0;         
+                this.clickY = 0;
+                this.animationFrameId = null;
+
+                this.init();
+            }
+
+            init() {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.canvas.style.position = this.container === document.body ? 'fixed' : 'absolute';
+                this.canvas.style.top = '0';
+                this.canvas.style.left = '0';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.canvas.style.zIndex = this.zIndex;
+                
+                if (this.container !== document.body && getComputedStyle(this.container).position === 'static') {
+                    this.container.style.position = 'relative';
+                }
+                
+                this.container.appendChild(this.canvas);
+
+                this.resizeHandler = () => this.resize();
+                window.addEventListener('resize', this.resizeHandler);
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    let rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = e.clientX - rect.left;
+                    this.mouse.y = e.clientY - rect.top;
+                });
+                
+                this.canvas.addEventListener('mouseout', () => {
+                    this.mouse.x = null;
+                    this.mouse.y = null;
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0 && this.mouseCooldown === 0 && this.implosionTimer === 0) { 
+                        let rect = this.canvas.getBoundingClientRect();
+                        this.clickX = e.clientX - rect.left;
+                        this.clickY = e.clientY - rect.top;
+                        
+                        this.implosionTimer = this.opts.implosionFrames; 
+                        
+                        this.particles.forEach(p => {
+                            let dx = this.clickX - p.x;
+                            let dy = this.clickY - p.y;
+                            let dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < this.opts.implosionPullRadius) {
+                                p.maxAllowedDist = dist;
+                            } else {
+                                p.maxAllowedDist = Infinity;
+                            }
+                        });
+                    }
+                });
+
+                this.resize();
+                this.createParticles();
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = this.container.clientWidth || window.innerWidth;
+                this.canvas.height = this.container.clientHeight || window.innerHeight;
+            }
+
+            createParticles() {
+                this.particles = [];
+                for (let i = 0; i < this.opts.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * this.opts.initialVelocity,
+                        vy: (Math.random() - 0.5) * this.opts.initialVelocity,
+                        color: this.opts.colors[Math.floor(Math.random() * this.opts.colors.length)],
+                        maxAllowedDist: Infinity,
+                        isHidden: false // 【新增】隐藏状态标识
+                    });
+                }
+            }
+
+            triggerExplosion(x, y) {
+                this.mouseCooldown = this.opts.explosionCooldown; 
+
+                this.explosions.push({
+                    x: x, y: y, radius: 0, alpha: 1
+                });
+
+                this.particles.forEach(p => {
+                    let dx = p.x - x;
+                    let dy = p.y - y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.opts.explosionBlastRadius && dist > 0) {
+                        let force = (this.opts.explosionBlastRadius - dist) / this.opts.explosionBlastRadius;
+                        p.vx += (dx / dist) * force * this.opts.explosionBlastForce;
+                        p.vy += (dy / dist) * force * this.opts.explosionBlastForce;
+                    }
+                    
+                    p.maxAllowedDist = Infinity;
+                    p.isHidden = false; // 【新增】爆炸瞬间解除隐藏
+                });
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (this.implosionTimer > 0) {
+                    this.implosionTimer--;
+                    
+                    this.particles.forEach(p => {
+                        let dx = this.clickX - p.x;
+                        let dy = this.clickY - p.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < this.opts.implosionPullRadius) {
+                            if (dist > 5) {
+                                p.vx += (dx / dist) * this.opts.implosionPullForce;
+                                p.vy += (dy / dist) * this.opts.implosionPullForce;
+                            }
+
+                            if (dist > p.maxAllowedDist && p.maxAllowedDist > 0) {
+                                let nx = dx / dist;
+                                let ny = dy / dist;
+                                p.x = this.clickX - nx * p.maxAllowedDist;
+                                p.y = this.clickY - ny * p.maxAllowedDist;
+                                
+                                let dotProduct = p.vx * nx + p.vy * ny;
+                                if (dotProduct < 0) { 
+                                    p.vx -= dotProduct * nx;
+                                    p.vy -= dotProduct * ny;
+                                    p.vx *= 0.75;
+                                    p.vy *= 0.75;
+                                }
+                            } else {
+                                p.maxAllowedDist = dist;
+                            }
+                        } else {
+                            p.maxAllowedDist = Infinity;
+                        }
+                        
+                        // 【新增】判断粒子是否进入了隐藏范围
+                        p.isHidden = dist < this.opts.implosionHideRadius;
+                    });
+
+                    let progress = this.implosionTimer / this.opts.implosionFrames; 
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.clickX, this.clickY, progress * this.opts.implosionRingMaxRadius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = `rgba(142, 227, 240, ${1 - progress})`; 
+                    this.ctx.lineWidth = this.opts.implosionRingLineWidth;
+                    this.ctx.stroke();
+
+                    if (this.implosionTimer === 0) {
+                        this.triggerExplosion(this.clickX, this.clickY);
+                    }
+                }
+
+                if (this.mouseCooldown > 0) {
+                    this.mouseCooldown--;
+                }
+
+                for (let i = this.explosions.length - 1; i >= 0; i--) {
+                    let exp = this.explosions[i];
+                    exp.radius += this.opts.explosionRippleSpeed; 
+                    exp.alpha -= this.opts.explosionRippleFade; 
+
+                    if (exp.alpha <= 0) {
+                        this.explosions.splice(i, 1);
+                    } else {
+                        this.ctx.beginPath();
+                        this.ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                        this.ctx.strokeStyle = `rgba(142, 227, 240, ${exp.alpha})`; 
+                        this.ctx.lineWidth = this.opts.explosionRippleLineWidth;
+                        this.ctx.stroke();
+                    }
+                }
+
+                const repRadiusSq = this.opts.particleRepulsionRadius * this.opts.particleRepulsionRadius;
+                const connDistanceSq = this.opts.connectDistance * this.opts.connectDistance;
+
+                for (let i = 0; i < this.opts.particleCount; i++) {
+                    let p = this.particles[i];
+
+                    if (this.mouse.x != null && this.mouse.y != null && 
+                        this.mouseCooldown === 0 && this.implosionTimer === 0) {
+                        let dx = p.x - this.mouse.x;
+                        let dy = p.y - this.mouse.y;
+                        let distSq = dx * dx + dy * dy;
+                        const LIMIT_SQ = this.opts.mouseRadius * this.opts.mouseRadius;
+                        const BUFFER = this.opts.mouseBuffer;
+
+                        if (distSq < LIMIT_SQ && distSq > (this.opts.mouseRadius - BUFFER) ** 2) {
+                            let dist = Math.sqrt(distSq);
+                            let nx = dx / dist;
+                            let ny = dy / dist;
+                            let dotProduct = p.vx * nx + p.vy * ny;
+                            
+                            if (dotProduct > 0) {
+                                p.vx -= 2 * dotProduct * nx;
+                                p.vy -= 2 * dotProduct * ny;
+                            }
+                        }
+                    }
+
+                    let speedSq = p.vx * p.vx + p.vy * p.vy;
+                    if (speedSq > this.opts.dampingThreshold) { 
+                        p.vx *= this.opts.dampingFactor;
+                        p.vy *= this.opts.dampingFactor;
+                    }
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < this.opts.particleRadius || p.x > this.canvas.width - this.opts.particleRadius) p.vx *= -1;
+                    if (p.y < this.opts.particleRadius || p.y > this.canvas.height - this.opts.particleRadius) p.vy *= -1;
+
+                    // 【核心修改】只有在粒子未被隐藏时，才绘制圆点
+                    if (!p.isHidden) {
+                        this.ctx.beginPath();
+                        this.ctx.arc(p.x, p.y, this.opts.particleRadius, 0, Math.PI * 2);
+                        this.ctx.fillStyle = p.color;
+                        this.ctx.fill();
+                    }
+
+                    for (let j = i + 1; j < this.opts.particleCount; j++) {
+                        let p2 = this.particles[j];
+                        let dxLine = p.x - p2.x;
+                        let dyLine = p.y - p2.y;
+                        let distSq = dxLine * dxLine + dyLine * dyLine;
+
+                        if (distSq < connDistanceSq || distSq < repRadiusSq) {
+                            let distance = Math.sqrt(distSq);
+
+                            // 物理斥力依然计算，保证隐藏的粒子也不会异常重叠
+                            if (distSq < repRadiusSq && distance > 0 && !p.isHidden && !p2.isHidden) {
+                                let force = (this.opts.particleRepulsionRadius - distance) / this.opts.particleRepulsionRadius * this.opts.particleRepulsionForce;
+                                let fx = (dxLine / distance) * force;
+                                let fy = (dyLine / distance) * force;
+                                
+                                p.vx += fx;
+                                p.vy += fy;
+                                p2.vx -= fx;
+                                p2.vy -= fy;
+                            }
+
+                            // 【核心修改】只有两端的粒子都没有被隐藏时，才绘制连线
+                            if (distSq < connDistanceSq && !p.isHidden && !p2.isHidden) {
+                                let opacity = 1 - (distance / this.opts.connectDistance);
+                                this.ctx.beginPath();
+                                this.ctx.strokeStyle = `rgba(142, 227, 240, ${opacity * this.opts.connectOpacityMax})`;
+                                this.ctx.lineWidth = this.opts.connectLineWidth;
+                                this.ctx.moveTo(p.x, p.y);
+                                this.ctx.lineTo(p2.x, p2.y);
+                                this.ctx.stroke();
+                            }
+                        }
+                    }
+                }
+
+                this.animationFrameId = requestAnimationFrame(() => this.animate());
+            }
+
+            destroy() {
+                cancelAnimationFrame(this.animationFrameId);
+                window.removeEventListener('resize', this.resizeHandler);
+                if (this.canvas.parentNode) {
+                    this.canvas.parentNode.removeChild(this.canvas);
+                }
+            }
+        }
+
+        const network = new ParticleNetwork({ particleCount: 200 });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>粒子网络 - 斥力全参数化</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0c0e14;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        class ParticleNetwork {
+            constructor(options = {}) {
+                // ==========================================
+                // 核心配置中心：所有影响效果的参数均在此统一定义
+                // ==========================================
+                const defaultOptions = {
+                    // 1. 基础挂载设置
+                    container: document.body,
+                    zIndex: 0,
+                    
+                    // 2. 粒子基础属性
+                    particleCount: 200,                // 粒子总数量
+                    particleRadius: 1.5,                 // 粒子半径
+                    initialVelocity: 1,              // 粒子初始速度的最大范围
+                    colors: ['#8ee3f0', '#4ecdc4', '#2b9eac'], // 粒子调色板
+                    
+                    // 3. 基础物理与环境
+                    dampingThreshold: 1,               // 触发阻尼减速的速度平方阈值
+                    dampingFactor: 0.99,               // 阻尼系数（越小减速越快）
+                    
+                    // 4. 粒子间连线效果
+                    connectDistance: 180,              // 产生连线的最大距离
+                    connectOpacityMax: 0.15,           // 连线的最清晰透明度
+                    connectLineWidth: 1,               // 连线粗细
+                    
+                    // 5. 鼠标隐形捕获力场
+                    mouseRadius: 150,                  // 鼠标捕获力场的半径
+                    mouseBuffer: 10,                   // 边界缓冲区大小（防止粒子卡墙抖动）
+                    
+                    // 6. 爆炸前摇：蓄力吸附阶段
+                    implosionFrames: 100,               // 蓄力吸附持续的帧数（时间长度）
+                    implosionPullRadius: 400,          // 蓄力时能吸附到的最远粒子距离
+                    implosionPullForce: 0.1,           // 向内吸附的拉力大小
+                    implosionRingMaxRadius: 120,       // 视觉收缩线圈的初始最大半径
+                    implosionRingLineWidth: 1.5,       // 视觉收缩线圈的粗细
+                    implosionHideRadius: 10,       
+
+                    // 7. 瞬间爆炸阶段
+                    explosionBlastRadius: 250,         // 爆炸冲击波能推开粒子的最远距离
+                    explosionBlastForce: 25,           // 爆炸中心最大的弹开推力
+                    explosionCooldown: 80,             // 爆炸后的无敌帧（鼠标失去捕获力的时间）
+                    
+                    // 8. 爆炸扩散波纹视觉
+                    explosionRippleSpeed: 12,          // 波纹向外扩散的速度
+                    explosionRippleFade: 0.03,         // 波纹透明度消失的速度
+                    explosionRippleLineWidth: 2,        // 波纹线条粗细
+
+                    // 9. 【新增】粒子间微小斥力
+                    particleRepulsionRadius: 8,       // 粒子间产生斥力的最大距离 (建议小于连线距离)
+                    particleRepulsionForce: 0.02       // 斥力的强度 (微调此项可改变粒子的“拥挤度”)
+                };
+
+                // 合并用户传入的配置与默认配置
+                this.opts = { ...defaultOptions, ...options };
+
+                this.container = this.opts.container;
+                this.zIndex = this.opts.zIndex;
+                
+                // 内部状态变量
+                this.particles = [];
+                this.explosions = []; 
+                this.mouse = { x: null, y: null };
+                this.mouseCooldown = 0;  
+                this.implosionTimer = 0; 
+                this.clickX = 0;         
+                this.clickY = 0;
+                this.animationFrameId = null;
+
+                this.init();
+            }
+
+            init() {
+                this.canvas = document.createElement('canvas');
+                this.ctx = this.canvas.getContext('2d');
+                
+                this.canvas.style.position = this.container === document.body ? 'fixed' : 'absolute';
+                this.canvas.style.top = '0';
+                this.canvas.style.left = '0';
+                this.canvas.style.width = '100%';
+                this.canvas.style.height = '100%';
+                this.canvas.style.zIndex = this.zIndex;
+                
+                if (this.container !== document.body && getComputedStyle(this.container).position === 'static') {
+                    this.container.style.position = 'relative';
+                }
+                
+                this.container.appendChild(this.canvas);
+
+                this.resizeHandler = () => this.resize();
+                window.addEventListener('resize', this.resizeHandler);
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    let rect = this.canvas.getBoundingClientRect();
+                    this.mouse.x = e.clientX - rect.left;
+                    this.mouse.y = e.clientY - rect.top;
+                });
+                
+                this.canvas.addEventListener('mouseout', () => {
+                    this.mouse.x = null;
+                    this.mouse.y = null;
+                });
+
+                this.canvas.addEventListener('mousedown', (e) => {
+                    if (e.button === 0 && this.mouseCooldown === 0 && this.implosionTimer === 0) { 
+                        let rect = this.canvas.getBoundingClientRect();
+                        this.clickX = e.clientX - rect.left;
+                        this.clickY = e.clientY - rect.top;
+                        
+                        this.implosionTimer = this.opts.implosionFrames; 
+                    }
+                });
+
+                this.resize();
+                this.createParticles();
+                this.animate();
+            }
+
+            resize() {
+                this.canvas.width = this.container.clientWidth || window.innerWidth;
+                this.canvas.height = this.container.clientHeight || window.innerHeight;
+            }
+
+            createParticles() {
+                this.particles = [];
+                for (let i = 0; i < this.opts.particleCount; i++) {
+                    this.particles.push({
+                        x: Math.random() * this.canvas.width,
+                        y: Math.random() * this.canvas.height,
+                        vx: (Math.random() - 0.5) * this.opts.initialVelocity,
+                        vy: (Math.random() - 0.5) * this.opts.initialVelocity,
+                        color: this.opts.colors[Math.floor(Math.random() * this.opts.colors.length)]
+                    });
+                }
+            }
+
+            triggerExplosion(x, y) {
+                this.mouseCooldown = this.opts.explosionCooldown; 
+
+                this.explosions.push({
+                    x: x, y: y, radius: 0, alpha: 1
+                });
+
+                this.particles.forEach(p => {
+                    let dx = p.x - x;
+                    let dy = p.y - y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < this.opts.explosionBlastRadius && dist > 0) {
+                        let force = (this.opts.explosionBlastRadius - dist) / this.opts.explosionBlastRadius;
+                        p.vx += (dx / dist) * force * this.opts.explosionBlastForce;
+                        p.vy += (dy / dist) * force * this.opts.explosionBlastForce;
+                    }
+                });
+            }
+
+            animate() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                // ==========================================
+                // 1. 爆炸前摇：物理吸附 + 极简收缩线圈
+                // ==========================================
+                if (this.implosionTimer > 0) {
+                    this.implosionTimer--;
+                    
+                    this.particles.forEach(p => {
+                        let dx = this.clickX - p.x;
+                        let dy = this.clickY - p.y;
+                        let dist = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (dist < this.opts.implosionPullRadius && dist > 5) {
+                            p.vx += (dx / dist) * this.opts.implosionPullForce;
+                            p.vy += (dy / dist) * this.opts.implosionPullForce;
+                        }
+                    });
+
+                    let progress = this.implosionTimer / this.opts.implosionFrames; 
+                    this.ctx.beginPath();
+                    this.ctx.arc(this.clickX, this.clickY, progress * this.opts.implosionRingMaxRadius, 0, Math.PI * 2);
+                    this.ctx.strokeStyle = `rgba(142, 227, 240, ${1 - progress})`; 
+                    this.ctx.lineWidth = this.opts.implosionRingLineWidth;
+                    this.ctx.stroke();
+
+                    if (this.implosionTimer === 0) {
+                        this.triggerExplosion(this.clickX, this.clickY);
+                    }
+                }
+
+                // ==========================================
+                // 2. 无敌帧冷却与 极简爆炸波纹
+                // ==========================================
+                if (this.mouseCooldown > 0) {
+                    this.mouseCooldown--;
+                }
+
+                for (let i = this.explosions.length - 1; i >= 0; i--) {
+                    let exp = this.explosions[i];
+                    exp.radius += this.opts.explosionRippleSpeed; 
+                    exp.alpha -= this.opts.explosionRippleFade; 
+
+                    if (exp.alpha <= 0) {
+                        this.explosions.splice(i, 1);
+                    } else {
+                        this.ctx.beginPath();
+                        this.ctx.arc(exp.x, exp.y, exp.radius, 0, Math.PI * 2);
+                        this.ctx.strokeStyle = `rgba(142, 227, 240, ${exp.alpha})`; 
+                        this.ctx.lineWidth = this.opts.explosionRippleLineWidth;
+                        this.ctx.stroke();
+                    }
+                }
+
+                // 为了性能，预先计算两个距离判定阈值的平方
+                const repRadiusSq = this.opts.particleRepulsionRadius * this.opts.particleRepulsionRadius;
+                const connDistanceSq = this.opts.connectDistance * this.opts.connectDistance;
+
+                // ==========================================
+                // 3. 粒子渲染：边界判定、位置更新与网络连线
+                // ==========================================
+                for (let i = 0; i < this.opts.particleCount; i++) {
+                    let p = this.particles[i];
+
+                    // 鼠标边界捕获逻辑
+                    if (this.mouse.x != null && this.mouse.y != null && 
+                        this.mouseCooldown === 0 && this.implosionTimer === 0) {
+                        let dx = p.x - this.mouse.x;
+                        let dy = p.y - this.mouse.y;
+                        let distSq = dx * dx + dy * dy;
+                        const LIMIT_SQ = this.opts.mouseRadius * this.opts.mouseRadius;
+                        const BUFFER = this.opts.mouseBuffer;
+
+                        if (distSq < LIMIT_SQ && distSq > (this.opts.mouseRadius - BUFFER) ** 2) {
+                            let dist = Math.sqrt(distSq);
+                            let nx = dx / dist;
+                            let ny = dy / dist;
+                            let dotProduct = p.vx * nx + p.vy * ny;
+                            
+                            if (dotProduct > 0) {
+                                p.vx -= 2 * dotProduct * nx;
+                                p.vy -= 2 * dotProduct * ny;
+                            }
+                        }
+                    }
+
+                    // 速度阻尼
+                    let speedSq = p.vx * p.vx + p.vy * p.vy;
+                    if (speedSq > this.opts.dampingThreshold) { 
+                        p.vx *= this.opts.dampingFactor;
+                        p.vy *= this.opts.dampingFactor;
+                    }
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // 屏幕边缘反弹
+                    if (p.x < this.opts.particleRadius || p.x > this.canvas.width - this.opts.particleRadius) p.vx *= -1;
+                    if (p.y < this.opts.particleRadius || p.y > this.canvas.height - this.opts.particleRadius) p.vy *= -1;
+
+                    // 绘制粒子圆点
+                    this.ctx.beginPath();
+                    this.ctx.arc(p.x, p.y, this.opts.particleRadius, 0, Math.PI * 2);
+                    this.ctx.fillStyle = p.color;
+                    this.ctx.fill();
+
+                    // --- 【核心修改点】绘制连线 & 计算微小斥力 ---
+                    // 这里利用已有的双重循环，避免增加额外的 O(N^2) 性能开销
+                    for (let j = i + 1; j < this.opts.particleCount; j++) {
+                        let p2 = this.particles[j];
+                        let dxLine = p.x - p2.x;
+                        let dyLine = p.y - p2.y;
+                        let distSq = dxLine * dxLine + dyLine * dyLine;
+
+                        // 只有在满足连线距离或斥力距离时，才进行耗时的 Math.sqrt 运算
+                        if (distSq < connDistanceSq || distSq < repRadiusSq) {
+                            let distance = Math.sqrt(distSq);
+
+                            // 【新增】如果粒子靠得太近，给它们施加一个弹开的斥力
+                            if (distSq < repRadiusSq && distance > 0) {
+                                let force = (this.opts.particleRepulsionRadius - distance) / this.opts.particleRepulsionRadius * this.opts.particleRepulsionForce;
+                                let fx = (dxLine / distance) * force;
+                                let fy = (dyLine / distance) * force;
+                                
+                                // 根据牛顿第三定律，力是相互的
+                                p.vx += fx;
+                                p.vy += fy;
+                                p2.vx -= fx;
+                                p2.vy -= fy;
+                            }
+
+                            // 绘制互相连通的网络线
+                            if (distSq < connDistanceSq) {
+                                let opacity = 1 - (distance / this.opts.connectDistance);
+                                this.ctx.beginPath();
+                                this.ctx.strokeStyle = `rgba(142, 227, 240, ${opacity * this.opts.connectOpacityMax})`;
+                                this.ctx.lineWidth = this.opts.connectLineWidth;
+                                this.ctx.moveTo(p.x, p.y);
+                                this.ctx.lineTo(p2.x, p2.y);
+                                this.ctx.stroke();
+                            }
+                        }
+                    }
+                }
+
+                this.animationFrameId = requestAnimationFrame(() => this.animate());
+            }
+
+            destroy() {
+                cancelAnimationFrame(this.animationFrameId);
+                window.removeEventListener('resize', this.resizeHandler);
+                if (this.canvas.parentNode) {
+                    this.canvas.parentNode.removeChild(this.canvas);
+                }
+            }
+        }
+
+        const network = new ParticleNetwork({ particleCount: 200 });
+    </script>
+</body>
+</html> -->
