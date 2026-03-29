@@ -88,7 +88,7 @@
             line-height: 16px;
         }
 
-        input[type="text"], input[type="number"], textarea, select {
+        input[type="text"], input[type="number"], textarea {
             width: 100%; font-size: 13px; padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
@@ -96,19 +96,16 @@
             transition: var(--transition); font-family: var(--font-stack); 
         }
         
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+        /* Removed box-shadow effect here */
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
             outline: none; 
             border-color: #a1a1aa; 
             background-color: #fff;
-            box-shadow: 0 0 0 3px rgba(228, 228, 231, 0.6);
         }
         
         textarea { resize: vertical; min-height: 70px; line-height: 1.5; white-space: pre; }
-        select { height: 35px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto; padding-right: 30px; }
         
-        .custom-select-container {
-            position: relative; width: 100%; font-family: var(--font-stack);
-        }
+        .custom-select-container { position: relative; width: 100%; font-family: var(--font-stack); }
         .custom-select-trigger {
             display: flex; justify-content: space-between; align-items: center;
             width: 100%; font-size: 13px; padding: 8px 12px; height: 35px;
@@ -117,12 +114,8 @@
             cursor: pointer; transition: var(--transition);
         }
         .custom-select-trigger:hover { border-color: #d1d5db; background-color: #f9fafb; }
-        
         .custom-select-trigger.active { border-color: #a1a1aa; background-color: #ffffff; }
-        
-        .custom-select-trigger svg {
-            width: 16px; height: 16px; stroke: #6b7280; transition: transform 0.3s ease;
-        }
+        .custom-select-trigger svg { width: 16px; height: 16px; stroke: #6b7280; transition: transform 0.3s ease; }
         .custom-select-trigger.active svg { transform: rotate(180deg); }
         
         .custom-options {
@@ -143,9 +136,7 @@
         .custom-option:hover { background-color: #f3f4f6; }
         .custom-option.selected { background-color: #e5e7eb; color: var(--accent); }
 
-        input[type="range"] {
-            -webkit-appearance: none; width: 100%; background: transparent; padding: 0; border: none; outline: none;
-        }
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; padding: 0; border: none; outline: none; }
         input[type="range"]:focus { outline: none; box-shadow: none; }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
@@ -174,8 +165,7 @@
         .block-label { 
             font-size: 12px; color: var(--text-main); font-weight: 500; 
             display: flex; align-items: center; 
-            height: 16px; 
-            margin-bottom: 6px; 
+            height: 16px; margin-bottom: 6px; 
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
 
@@ -196,8 +186,7 @@
             font-size: 11.5px; color: var(--text-muted); background: var(--bg-body); 
             border-radius: var(--radius-sm); margin-top: 4px; font-family: monospace;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            height: 34px; 
-            display: flex; align-items: center; padding: 0 10px;
+            height: 34px; display: flex; align-items: center; padding: 0 10px;
         }
 
         .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; height: 18px;}
@@ -221,14 +210,23 @@
             position: relative; overflow: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             user-select: none;
         }
+        
+        #scrollWrapper {
+            position: relative;
+            transform-origin: top left;
+        }
+        
         canvas {
             display: block; background-color: transparent; cursor: crosshair;
-            font-variant-ligatures: contextual; font-feature-settings: "calt" 1, "liga" 1; 
+            z-index: 1;
+        }
+        
+        #svgOverlay {
+            position: absolute; top: 0; left: 0; 
+            pointer-events: none; z-index: 2; overflow: visible;
         }
 
-        .is-panning canvas {
-            cursor: grabbing !important;
-        }
+        .is-panning canvas { cursor: grabbing !important; }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -244,9 +242,7 @@
 <body>
 
 <div class="app-container">
-    
     <div class="sidebar-layout">
-        
         <div class="panel-box panel-main">
             <div class="panel-header">
                 <h2 class="panel-title" data-i18n="title">Penman's Typesetter</h2>
@@ -271,7 +267,7 @@
                 <div class="grid-row" style="margin-top: 4px;">
                     <div>
                         <label class="block-label label-with-value"><span data-i18n="label_size">Size: </span><span id="sizeVal" class="val-text">120</span></label>
-                        <input type="range" id="sizeSlider" min="10" max="180" value="120">
+                        <input type="range" id="sizeSlider" min="10" max="300" value="120">
                     </div>
                     <div>
                         <label class="block-label label-with-value"><span data-i18n="label_lh">Line H: </span><span id="lhVal" class="val-text">1.5</span></label>
@@ -281,12 +277,12 @@
 
                 <div>
                     <label class="block-label" data-i18n="label_align">Alignment</label>
-                    <div class="custom-select-container" id="alignSelectContainer">
-                        <div class="custom-select-trigger" id="alignSelectTrigger">
-                            <span id="alignSelectText" data-i18n="align_center">Center</span>
+                    <div class="custom-select-container" data-target="alignSelect">
+                        <div class="custom-select-trigger">
+                            <span class="select-text" data-i18n="align_center">Center</span>
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
                         </div>
-                        <div class="custom-options" id="alignSelectOptions">
+                        <div class="custom-options">
                             <div class="custom-option" data-value="left" data-i18n="align_left">Left</div>
                             <div class="custom-option selected" data-value="center" data-i18n="align_center">Center</div>
                             <div class="custom-option" data-value="right" data-i18n="align_right">Right</div>
@@ -322,19 +318,49 @@
                     <div class="grid-row">
                         <div>
                             <label class="block-label" data-i18n="circle_dir">Direction</label>
-                            <select id="circleDir">
-                                <option value="in" data-i18n="dir_in">Outside-In</option>
-                                <option value="out" data-i18n="dir_out">Inside-Out</option>
-                            </select>
+                            <div class="custom-select-container" data-target="circleDir">
+                                <div class="custom-select-trigger">
+                                    <span class="select-text" data-i18n="dir_in">Outside-In</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </div>
+                                <div class="custom-options">
+                                    <div class="custom-option selected" data-value="in" data-i18n="dir_in">Outside-In</div>
+                                    <div class="custom-option" data-value="out" data-i18n="dir_out">Inside-Out</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="circleDir" value="in">
                         </div>
                         <div>
                             <label class="block-label" data-i18n="circle_bend">Bend Direction</label>
-                            <select id="circleBend">
-                                <option value="down" data-i18n="bend_down">Forward</option>
-                                <option value="up" data-i18n="bend_up">Backward</option>
-                            </select>
+                            <div class="custom-select-container" data-target="circleBend">
+                                <div class="custom-select-trigger">
+                                    <span class="select-text" data-i18n="bend_down">Forward</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </div>
+                                <div class="custom-options">
+                                    <div class="custom-option selected" data-value="down" data-i18n="bend_down">Forward</div>
+                                    <div class="custom-option" data-value="up" data-i18n="bend_up">Backward</div>
+                                </div>
+                            </div>
+                            <input type="hidden" id="circleBend" value="down">
                         </div>
                     </div>
+                    
+                    <div style="margin-top: 4px;">
+                        <label class="block-label" data-i18n="circle_mode">Render Mode</label>
+                        <div class="custom-select-container" data-target="circleMode">
+                            <div class="custom-select-trigger">
+                                <span class="select-text" data-i18n="mode_vector">Vector (TextPath)</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </div>
+                            <div class="custom-options">
+                                <div class="custom-option selected" data-value="vector" data-i18n="mode_vector">Vector (TextPath)</div>
+                                <div class="custom-option" data-value="raster" data-i18n="mode_raster">Deform (calt Support)</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="circleMode" value="vector">
+                    </div>
+
                 </div>
             </div>
 
@@ -390,11 +416,13 @@
             <button class="btn" id="exportBtn" style="width: 100%;" data-i18n="btn_export">Export to PNG</button>
             <a href="https://sil-z.github.io/" target="_blank" class="btn btn-primary" style="width: 100%;" data-i18n="btn_website">Personal Website</a>
         </div>
-
     </div>
 
     <div class="panel-right" id="canvasContainer">
-        <canvas id="canvas"></canvas>
+        <div id="scrollWrapper">
+            <canvas id="canvas"></canvas>
+            <svg id="svgOverlay" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+        </div>
     </div>
 </div>
 
@@ -407,12 +435,12 @@
             section_circle: "Circular Layout", enable_circle: "Enable Circular", circle_radius: "Base Radius: ", 
             circle_dir: "Direction", dir_in: "Outside-In", dir_out: "Inside-Out", 
             circle_bend: "Bend Direction", bend_down: "Forward", bend_up: "Backward",
+            circle_mode: "Rendering Mode", mode_vector: "Vector Warp", mode_raster: "Raster Warp",
             section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Actual Width (mm)",
             status_waiting: "Font not loaded...", status_fetching: "Fetching default...", status_parsing: "Parsing font data...",
             status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Warning: Metric unavailable",
             section_overlay: "Measure", overlay_lines: "Guidelines", overlay_center: "Midpoint", overlay_space: "By Word", 
-            overlay_radius: "Radius", btn_export: "Export to PNG",
-            btn_website: "Personal Website"
+            overlay_radius: "Radius", btn_export: "Export to PNG", btn_website: "Personal Website"
         },
         zh: {
             title: "书法字体排版器", section_font: "字体源", upload_btn: "上传文件...", preset_btn: "加载默认",
@@ -421,12 +449,12 @@
             section_circle: "圆弧排版", enable_circle: "启用圆弧排版", circle_radius: "基础半径：", 
             circle_dir: "排版方向", dir_in: "由外向内", dir_out: "由内向外", 
             circle_bend: "变形方向", bend_down: "正向", bend_up: "反向",
+            circle_mode: "渲染模式", mode_vector: "矢量形变", mode_raster: "位图形变",
             section_calib: "校准", label_glyph: "基准字形", label_width: "实际尺寸 (mm)",
             status_waiting: "字体未导入...", status_fetching: "下载默认字体...", status_parsing: "解析字体数据...",
             status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "警告：无法读取",
             section_overlay: "测量", overlay_lines: "辅助线", overlay_center: "中点", overlay_space: "逐词", 
-            overlay_radius: "半径", btn_export: "导出为 PNG",
-            btn_website: "个人主页"
+            overlay_radius: "半径", btn_export: "导出为 PNG", btn_website: "个人主页"
         }
     };
 
@@ -439,35 +467,13 @@
     let selectedPoint = null;
     let lineData = [];
     let customOffsets = []; 
-
-    // --- 性能优化：交互防抖状态 ---
-    let isInteracting = false;
-    let interactTimer = null;
-
-    function triggerInteraction() {
-        if (!isInteracting) {
-            isInteracting = true;
-        }
-        clearTimeout(interactTimer);
-        interactTimer = setTimeout(() => {
-            isInteracting = false;
-            render(); // 静止后触发一次高清重绘
-        }, 150);
-    }
+    let fontBase64 = ""; 
 
     const canvasContainer = document.getElementById('canvasContainer');
+    const scrollWrapper = document.getElementById('scrollWrapper');
     const canvas = document.getElementById('canvas');
+    const svgOverlay = document.getElementById('svgOverlay');
     const ctx = canvas.getContext('2d');
-    
-    // 初始化离屏 Canvas 用于 calt 特性渲染
-    const hiddenCanvas = document.createElement('canvas');
-    hiddenCanvas.style.position = 'absolute';
-    hiddenCanvas.style.visibility = 'hidden';
-    hiddenCanvas.style.pointerEvents = 'none';
-    hiddenCanvas.style.fontVariantLigatures = "contextual";
-    hiddenCanvas.style.fontFeatureSettings = '"calt" 1, "liga" 1';
-    document.body.appendChild(hiddenCanvas);
-    const hctx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
     
     const textInput = document.getElementById('textInput');
     const calibCharInput = document.getElementById('calibChar');
@@ -489,31 +495,81 @@
     const radiusSlider = document.getElementById('radiusSlider');
     const circleDir = document.getElementById('circleDir');
     const circleBend = document.getElementById('circleBend');
+    const circleMode = document.getElementById('circleMode'); 
 
-    const alignContainer = document.getElementById('alignSelectContainer');
-    const alignTrigger = document.getElementById('alignSelectTrigger');
-    const alignOptionsPanel = document.getElementById('alignSelectOptions');
-    const alignText = document.getElementById('alignSelectText');
-    const customOptionsList = document.querySelectorAll('.custom-option');
+    // 通用自定义选择器逻辑绑定
+    document.querySelectorAll('.custom-select-container').forEach(container => {
+        const trigger = container.querySelector('.custom-select-trigger');
+        const optionsPanel = container.querySelector('.custom-options');
+        const textSpan = container.querySelector('.select-text');
+        const hiddenInputId = container.getAttribute('data-target');
+        const hiddenInput = document.getElementById(hiddenInputId);
+        const options = container.querySelectorAll('.custom-option');
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // 关闭其他的下拉菜单
+            document.querySelectorAll('.custom-options').forEach(p => { if (p !== optionsPanel) p.classList.remove('open'); });
+            document.querySelectorAll('.custom-select-trigger').forEach(t => { if (t !== trigger) t.classList.remove('active'); });
+            
+            optionsPanel.classList.toggle('open');
+            trigger.classList.toggle('active');
+        });
+
+        options.forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                options.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                const value = option.getAttribute('data-value');
+                const textKey = option.getAttribute('data-i18n');
+                
+                hiddenInput.value = value;
+                textSpan.setAttribute('data-i18n', textKey);
+                textSpan.textContent = i18nDict[currentLang][textKey];
+                
+                optionsPanel.classList.remove('open');
+                trigger.classList.remove('active');
+                render(); // 选择变化时触发重新渲染
+            });
+        });
+    });
+
+    // 点击其他区域关闭下拉
+    document.addEventListener('click', () => {
+        document.querySelectorAll('.custom-options').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.custom-select-trigger').forEach(t => t.classList.remove('active'));
+    });
+
+    // 通用自定义选择器赋值方法（读取存档用）
+    function setCustomSelectValue(inputId, value) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        input.value = value;
+        const container = document.querySelector(`.custom-select-container[data-target="${inputId}"]`);
+        if (container) {
+            const options = container.querySelectorAll('.custom-option');
+            const textSpan = container.querySelector('.select-text');
+            options.forEach(opt => {
+                if (opt.getAttribute('data-value') === value) {
+                    opt.classList.add('selected');
+                    const textKey = opt.getAttribute('data-i18n');
+                    textSpan.setAttribute('data-i18n', textKey);
+                    textSpan.textContent = i18nDict[currentLang] ? i18nDict[currentLang][textKey] : textKey;
+                } else {
+                    opt.classList.remove('selected');
+                }
+            });
+        }
+    }
 
     function saveSettings() {
         const state = {
-            text: textInput.value,
-            size: sizeSlider.value,
-            lh: lhSlider.value,
-            align: alignSelectInput.value,
-            offsets: customOffsets,
-            calibChar: calibCharInput.value,
-            calibMm: calibMmInput.value,
-            showLines: showLines.checked,
-            showCenters: showCenters.checked,
-            showSpaces: showSpaces.checked,
-            showRadius: showRadius.checked,
-            useCircle: useCircle.checked,
-            circleRadius: radiusSlider.value,
-            circleDir: circleDir.value,
-            circleBend: circleBend.value,
-            lang: currentLang
+            text: textInput.value, size: sizeSlider.value, lh: lhSlider.value, align: alignSelectInput.value,
+            offsets: customOffsets, calibChar: calibCharInput.value, calibMm: calibMmInput.value,
+            showLines: showLines.checked, showCenters: showCenters.checked, showSpaces: showSpaces.checked, showRadius: showRadius.checked,
+            useCircle: useCircle.checked, circleRadius: radiusSlider.value, circleDir: circleDir.value, circleBend: circleBend.value, 
+            circleMode: circleMode.value, lang: currentLang 
         };
         localStorage.setItem('penmanSettings', JSON.stringify(state));
     }
@@ -526,16 +582,7 @@
                 if (state.text !== undefined) textInput.value = state.text;
                 if (state.size !== undefined) { sizeSlider.value = state.size; document.getElementById('sizeVal').textContent = state.size; }
                 if (state.lh !== undefined) { lhSlider.value = state.lh; document.getElementById('lhVal').textContent = state.lh; }
-                if (state.align !== undefined) {
-                    alignSelectInput.value = state.align;
-                    customOptionsList.forEach(opt => {
-                        if (opt.getAttribute('data-value') === state.align) {
-                            opt.classList.add('selected');
-                        } else {
-                            opt.classList.remove('selected');
-                        }
-                    });
-                }
+                if (state.align !== undefined) setCustomSelectValue('alignSelect', state.align);
                 if (state.offsets !== undefined) customOffsets = state.offsets;
                 if (state.calibChar !== undefined) calibCharInput.value = state.calibChar;
                 if (state.calibMm !== undefined) calibMmInput.value = state.calibMm;
@@ -543,16 +590,15 @@
                 if (state.showCenters !== undefined) showCenters.checked = state.showCenters;
                 if (state.showSpaces !== undefined) showSpaces.checked = state.showSpaces;
                 if (state.showRadius !== undefined) showRadius.checked = state.showRadius;
-                
                 if (state.useCircle !== undefined) {
                     useCircle.checked = state.useCircle;
                     circleSettings.style.display = state.useCircle ? 'flex' : 'none';
                     document.getElementById('radiusMeasureRow').style.display = state.useCircle ? 'flex' : 'none';
                 }
                 if (state.circleRadius !== undefined) { radiusSlider.value = state.circleRadius; document.getElementById('radiusVal').textContent = state.circleRadius; }
-                if (state.circleDir !== undefined) circleDir.value = state.circleDir;
-                if (state.circleBend !== undefined) circleBend.value = state.circleBend;
-
+                if (state.circleDir !== undefined) setCustomSelectValue('circleDir', state.circleDir);
+                if (state.circleBend !== undefined) setCustomSelectValue('circleBend', state.circleBend);
+                if (state.circleMode !== undefined) setCustomSelectValue('circleMode', state.circleMode);
                 if (state.lang !== undefined) currentLang = state.lang;
             } catch(e) {}
         }
@@ -560,181 +606,97 @@
 
     function updateLanguage() {
         document.getElementById('langBtn').textContent = currentLang === 'en' ? '中文' : 'EN';
+        
+        // 基础元素的国际化
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (i18nDict[currentLang][key]) {
-                if (el.tagName === 'OPTION') {
-                    el.textContent = i18nDict[currentLang][key];
-                } else {
-                    el.childNodes.forEach(child => {
-                        if (child.nodeType === 3 && child.textContent.trim().length > 0) {
-                            child.textContent = i18nDict[currentLang][key];
-                        }
-                    });
-                }
+                el.childNodes.forEach(child => {
+                    if (child.nodeType === 3 && child.textContent.trim().length > 0) { 
+                        child.textContent = i18nDict[currentLang][key]; 
+                    }
+                });
             }
         });
+
+        // 自定义下拉菜单的国际化同步更新
+        document.querySelectorAll('.custom-select-container').forEach(container => {
+            const selectedOpt = container.querySelector('.custom-option.selected');
+            const textSpan = container.querySelector('.select-text');
+            if (selectedOpt && textSpan) {
+                const key = selectedOpt.getAttribute('data-i18n');
+                textSpan.textContent = i18nDict[currentLang][key];
+            }
+        });
+
         if (currentOpentypeFont && fontFileName) document.getElementById('uploadLabel').textContent = fontFileName;
-        
-        const activeOptionKey = document.querySelector('.custom-option.selected').getAttribute('data-i18n');
-        document.getElementById('alignSelectText').textContent = i18nDict[currentLang][activeOptionKey];
-        
         updateScaleAndRender();
     }
     
-    document.getElementById('langBtn').addEventListener('click', () => {
-        currentLang = currentLang === 'en' ? 'zh' : 'en';
-        updateLanguage();
-    });
-
-    alignTrigger.addEventListener('click', (e) => {
-        e.stopPropagation();
-        alignOptionsPanel.classList.toggle('open');
-        alignTrigger.classList.toggle('active');
-    });
-
-    customOptionsList.forEach(option => {
-        option.addEventListener('click', (e) => {
-            e.stopPropagation();
-            customOptionsList.forEach(opt => opt.classList.remove('selected'));
-            option.classList.add('selected');
-            
-            const value = option.getAttribute('data-value');
-            const textKey = option.getAttribute('data-i18n');
-            
-            alignSelectInput.value = value;
-            alignText.setAttribute('data-i18n', textKey);
-            alignText.textContent = i18nDict[currentLang][textKey];
-
-            alignOptionsPanel.classList.remove('open');
-            alignTrigger.classList.remove('active');
-            render();
-        });
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!alignContainer.contains(e.target)) {
-            alignOptionsPanel.classList.remove('open');
-            alignTrigger.classList.remove('active');
-        }
-    });
+    document.getElementById('langBtn').addEventListener('click', () => { currentLang = currentLang === 'en' ? 'zh' : 'en'; updateLanguage(); });
 
     document.getElementById('fontInput').addEventListener('change', handleFontUpload);
     document.getElementById('presetBtn').addEventListener('click', loadPresetFont);
     document.getElementById('exportBtn').addEventListener('click', exportPNG);
     document.getElementById('resetOffsetsBtn').addEventListener('click', () => { customOffsets = []; updateOffsetsUI(); render(); });
     
-    showLines.addEventListener('change', render);
-    showCenters.addEventListener('change', render);
-    showSpaces.addEventListener('change', render);
-    showRadius.addEventListener('change', render);
-    calibCharInput.addEventListener('input', updateScaleAndRender);
-    calibMmInput.addEventListener('input', updateScaleAndRender);
+    showLines.addEventListener('change', render); showCenters.addEventListener('change', render);
+    showSpaces.addEventListener('change', render); showRadius.addEventListener('change', render);
+    calibCharInput.addEventListener('input', updateScaleAndRender); calibMmInput.addEventListener('input', updateScaleAndRender);
 
     useCircle.addEventListener('change', (e) => {
         const isCircle = e.target.checked;
         circleSettings.style.display = isCircle ? 'flex' : 'none';
         document.getElementById('radiusMeasureRow').style.display = isCircle ? 'flex' : 'none';
-        updateOffsetsUI(); 
-        render();
+        updateOffsetsUI(); render();
     });
     
-    radiusSlider.addEventListener('input', (e) => {
-        document.getElementById('radiusVal').textContent = e.target.value;
-        triggerInteraction();
-        render();
-    });
-    circleDir.addEventListener('change', render);
-    circleBend.addEventListener('change', render);
+    radiusSlider.addEventListener('input', (e) => { document.getElementById('radiusVal').textContent = e.target.value; render(); });
     
-    let isPanning = false;
-    let startX, startY, scrollLeft, scrollTop;
+    let isPanning = false; let startX, startY, scrollLeft, scrollTop;
 
     canvasContainer.addEventListener('mousedown', (e) => {
         if (e.button === 1) { 
-            e.preventDefault();
-            isPanning = true;
-            canvasContainer.classList.add('is-panning');
-            startX = e.clientX;
-            startY = e.clientY;
-            scrollLeft = canvasContainer.scrollLeft;
-            scrollTop = canvasContainer.scrollTop;
+            e.preventDefault(); isPanning = true; canvasContainer.classList.add('is-panning');
+            startX = e.clientX; startY = e.clientY; scrollLeft = canvasContainer.scrollLeft; scrollTop = canvasContainer.scrollTop;
         } else if (e.button === 0) { 
             handleCanvasClick(e);
         }
     });
 
     canvasContainer.addEventListener('mousemove', (e) => {
-        if (!isPanning) return;
-        e.preventDefault();
-        const walkX = e.clientX - startX;
-        const walkY = e.clientY - startY;
-        canvasContainer.scrollLeft = scrollLeft - walkX;
-        canvasContainer.scrollTop = scrollTop - walkY;
+        if (!isPanning) return; e.preventDefault();
+        canvasContainer.scrollLeft = scrollLeft - (e.clientX - startX); canvasContainer.scrollTop = scrollTop - (e.clientY - startY);
     });
 
-    const stopPanning = () => {
-        isPanning = false;
-        canvasContainer.classList.remove('is-panning');
-    };
-
+    const stopPanning = () => { isPanning = false; canvasContainer.classList.remove('is-panning'); };
     canvasContainer.addEventListener('mouseup', (e) => { if (e.button === 1) stopPanning(); });
     canvasContainer.addEventListener('mouseleave', stopPanning);
 
     canvasContainer.addEventListener('wheel', (e) => {
         e.preventDefault();
-        triggerInteraction();
-        
         const rect = canvasContainer.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        const currentScrollX = canvasContainer.scrollLeft;
-        const currentScrollY = canvasContainer.scrollTop;
-
-        const canvasMouseX = currentScrollX + mouseX;
-        const canvasMouseY = currentScrollY + mouseY;
+        const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
+        const canvasMouseX = canvasContainer.scrollLeft + mouseX; const canvasMouseY = canvasContainer.scrollTop + mouseY;
 
         const oldSize = parseInt(sizeSlider.value);
-        let delta = e.deltaY < 0 ? 1 : -1;
-        let step = oldSize >= 100 ? 10 : 5;
-        let newSize = oldSize + delta * step;
-        
-        if (newSize < 10) newSize = 10;
-        if (newSize > 180) newSize = 180;
+        let newSize = oldSize + (e.deltaY < 0 ? 1 : -1) * (oldSize >= 100 ? 10 : 5);
+        if (newSize < 10) newSize = 10; if (newSize > 300) newSize = 300;
 
         if (newSize !== oldSize) {
-            sizeSlider.value = newSize;
-            document.getElementById('sizeVal').textContent = newSize;
-            
-            const scaleRatio = newSize / oldSize;
+            sizeSlider.value = newSize; document.getElementById('sizeVal').textContent = newSize;
             updateScaleAndRender();
-            
             requestAnimationFrame(() => {
+                const scaleRatio = newSize / oldSize;
                 canvasContainer.scrollLeft = canvasMouseX * scaleRatio - mouseX;
                 canvasContainer.scrollTop = canvasMouseY * scaleRatio - mouseY;
             });
         }
     }, { passive: false });
 
-    textInput.addEventListener('input', () => { 
-        selectedPoint = null; 
-        updateOffsetsUI(); 
-        triggerInteraction();
-        render(); 
-    });
-
-    sizeSlider.addEventListener('input', (e) => {
-        document.getElementById('sizeVal').textContent = e.target.value;
-        triggerInteraction();
-        updateScaleAndRender(); 
-    });
-
-    lhSlider.addEventListener('input', (e) => {
-        document.getElementById('lhVal').textContent = e.target.value;
-        triggerInteraction();
-        render();
-    });
+    textInput.addEventListener('input', () => { selectedPoint = null; updateOffsetsUI(); render(); });
+    sizeSlider.addEventListener('input', (e) => { document.getElementById('sizeVal').textContent = e.target.value; updateScaleAndRender(); });
+    lhSlider.addEventListener('input', (e) => { document.getElementById('lhVal').textContent = e.target.value; render(); });
 
     const resizeObserver = new ResizeObserver(() => { render(); });
     resizeObserver.observe(canvasContainer);
@@ -745,115 +707,77 @@
         while(customOffsets.length > lines.length) customOffsets.pop();
 
         const isCircle = useCircle.checked;
-        const minVal = isCircle ? -180 : -100;
-        const maxVal = isCircle ? 180 : 100;
-        const unit = isCircle ? '°' : '%';
+        const minVal = isCircle ? -180 : -100; const maxVal = isCircle ? 180 : 100; const unit = isCircle ? '°' : '%';
 
         offsetContainer.innerHTML = '';
         lines.forEach((line, i) => {
-            if (customOffsets[i] < minVal) customOffsets[i] = minVal;
-            if (customOffsets[i] > maxVal) customOffsets[i] = maxVal;
-
-            const item = document.createElement('div');
-            item.className = 'line-offset-item';
-            item.innerHTML = `
-                <span class="line-label">L${i+1}</span>
-                <input type="range" min="${minVal}" max="${maxVal}" value="${customOffsets[i]}" data-idx="${i}">
-                <span class="val-label">${customOffsets[i]}${unit}</span>
-            `;
-            const slider = item.querySelector('input');
-            const valLabel = item.querySelector('.val-label');
+            if (customOffsets[i] < minVal) customOffsets[i] = minVal; if (customOffsets[i] > maxVal) customOffsets[i] = maxVal;
+            const item = document.createElement('div'); item.className = 'line-offset-item';
+            item.innerHTML = `<span class="line-label">L${i+1}</span><input type="range" min="${minVal}" max="${maxVal}" value="${customOffsets[i]}" data-idx="${i}"><span class="val-label">${customOffsets[i]}${unit}</span>`;
             
+            const slider = item.querySelector('input'); const valLabel = item.querySelector('.val-label');
             slider.addEventListener('input', (e) => {
-                customOffsets[i] = parseInt(e.target.value);
-                valLabel.textContent = customOffsets[i] + unit;
-                triggerInteraction();
-                render();
+                customOffsets[i] = parseInt(e.target.value); valLabel.textContent = customOffsets[i] + unit; render();
             });
             offsetContainer.appendChild(item);
         });
     }
 
     async function handleFontUpload(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        fontFileName = file.name;
-        uploadLabel.textContent = fontFileName;
+        const file = e.target.files[0]; if (!file) return;
+        fontFileName = file.name; uploadLabel.textContent = fontFileName;
         await loadFontFromArrayBuffer(await file.arrayBuffer());
     }
 
     async function loadPresetFont() {
-        scaleInfo.textContent = i18nDict[currentLang].status_fetching;
-        scaleInfo.style.color = "var(--text-muted)";
-        fontFileName = "SilhouetteRoundhand.otf";
-        uploadLabel.textContent = fontFileName;
-        
+        scaleInfo.textContent = i18nDict[currentLang].status_fetching; scaleInfo.style.color = "var(--text-muted)";
+        fontFileName = "SilhouetteRoundhand.otf"; uploadLabel.textContent = fontFileName;
         try {
             const response = await fetch('https://sil-z.github.io/assets/fonts/SilhouetteRoundhand.otf');
             if (!response.ok) throw new Error();
-            const buffer = await response.arrayBuffer();
-            await loadFontFromArrayBuffer(buffer);
-        } catch (err) {
-            scaleInfo.textContent = i18nDict[currentLang].status_error;
-            scaleInfo.style.color = "#ef4444";
-        }
+            await loadFontFromArrayBuffer(await response.arrayBuffer());
+        } catch (err) { scaleInfo.textContent = i18nDict[currentLang].status_error; scaleInfo.style.color = "#ef4444"; }
     }
 
     async function loadFontFromArrayBuffer(arrayBuffer) {
         scaleInfo.textContent = i18nDict[currentLang].status_parsing;
         try {
             currentOpentypeFont = opentype.parse(arrayBuffer);
+            
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
+            fontBase64 = btoa(binary);
+
             const fontFace = new FontFace('CustomRenderFont', arrayBuffer);
-            await fontFace.load();
-            document.fonts.add(fontFace);
-            isFontLoaded = true;
-            scaleInfo.style.color = "var(--text-main)";
+            await fontFace.load(); document.fonts.add(fontFace);
+            isFontLoaded = true; scaleInfo.style.color = "var(--text-main)";
             updateScaleAndRender();
-        } catch (err) {
-            scaleInfo.textContent = i18nDict[currentLang].status_error;
-            scaleInfo.style.color = "#ef4444";
-        }
+        } catch (err) { scaleInfo.textContent = i18nDict[currentLang].status_error; scaleInfo.style.color = "#ef4444"; }
     }
 
     function mapPointToCircle(x, y, R, cx, cy, bendDown) {
-        const theta = x / R;
-        const r = bendDown ? (R - y) : (R + y);
-        if (bendDown) {
-            return { x: cx + r * Math.sin(theta), y: cy - r * Math.cos(theta) };
-        } else {
-            return { x: cx + r * Math.sin(theta), y: cy + r * Math.cos(theta) };
-        }
+        const theta = x / R; const r = bendDown ? (R - y) : (R + y);
+        if (bendDown) { return { x: cx + r * Math.sin(theta), y: cy - r * Math.cos(theta) };
+        } else { return { x: cx + r * Math.sin(theta), y: cy + r * Math.cos(theta) }; }
     }
 
     function updateScaleAndRender() {
-        const currentFontSize = parseInt(sizeSlider.value);
-        const t = i18nDict[currentLang];
-
-        if (!currentOpentypeFont) {
-            mmPerPixel = 10 / currentFontSize;
-            render();
-            return;
-        }
+        const currentFontSize = parseInt(sizeSlider.value); const t = i18nDict[currentLang];
+        if (!currentOpentypeFont) { mmPerPixel = 10 / currentFontSize; render(); return; }
         
-        const char = calibCharInput.value;
-        const mm = parseFloat(calibMmInput.value);
-        
+        const char = calibCharInput.value; const mm = parseFloat(calibMmInput.value);
         if (char && !isNaN(mm) && mm > 0) {
             const glyph = currentOpentypeFont.charToGlyph(char);
             if (glyph && glyph.advanceWidth > 0) {
                 const mmPerFontUnit = mm / glyph.advanceWidth;
                 const pixelsPerFontUnit = currentFontSize / currentOpentypeFont.unitsPerEm;
                 mmPerPixel = mmPerFontUnit / pixelsPerFontUnit;
-                
                 scaleInfo.textContent = t.scale_format.replace('{val}', mmPerPixel.toFixed(4));
                 scaleInfo.style.color = "var(--text-main)";
-            } else {
-                scaleInfo.textContent = t.scale_warn;
-                scaleInfo.style.color = "#ef4444";
-            }
+            } else { scaleInfo.textContent = t.scale_warn; scaleInfo.style.color = "#ef4444"; }
         }
-        selectedPoint = null;
-        render();
+        selectedPoint = null; render();
     }
 
     function render() {
@@ -861,10 +785,8 @@
         if (rect.width === 0 || rect.height === 0) return;
 
         const lines = textInput.value.split('\n');
-        
         const fontSize = parseInt(sizeSlider.value);
         const viewScale = fontSize / 100;
-        
         const lhRatio = parseFloat(lhSlider.value);
         const alignment = alignSelectInput.value; 
         const padding = 60 * viewScale; 
@@ -896,10 +818,19 @@
         }
         
         const dpr = window.devicePixelRatio || 1;
+        
         canvas.width = contentWidth * dpr;
         canvas.height = contentHeight * dpr;
         canvas.style.width = `${contentWidth}px`;
         canvas.style.height = `${contentHeight}px`;
+
+        svgOverlay.setAttribute('viewBox', `0 0 ${contentWidth * dpr} ${contentHeight * dpr}`);
+        svgOverlay.style.width = `${contentWidth}px`;
+        svgOverlay.style.height = `${contentHeight}px`;
+        
+        svgOverlay.innerHTML = '';
+        const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        svgOverlay.appendChild(defs);
 
         ctx.save();
         ctx.scale(dpr, dpr);
@@ -916,7 +847,6 @@
         lineData = [];
 
         if (useCircle.checked) {
-            // === CIRCULAR LAYOUT ===
             let currentR = parseInt(radiusSlider.value) * viewScale;
             const R_step = fontSize * lhRatio; 
             const isOutIn = circleDir.value === 'in'; 
@@ -928,73 +858,128 @@
             lines.forEach((line, index) => {
                 if (!line) { currentR = isOutIn ? currentR - R_step : currentR + R_step; return; }
                 
+                // 1. 排版物理测量
                 const totalWidthPx = ctx.measureText(line).width;
                 const maxArcLength = 2 * Math.PI * currentR;
                 
                 let startX = 0;
-                if (alignment === 'center') {
-                    startX = -totalWidthPx / 2;
-                } else if (alignment === 'left') {
-                    startX = -maxArcLength / 2;
-                } else if (alignment === 'right') {
-                    startX = maxArcLength / 2 - totalWidthPx;
-                }
+                if (alignment === 'center') { startX = -totalWidthPx / 2; } 
+                else if (alignment === 'left') { startX = -maxArcLength / 2; } 
+                else if (alignment === 'right') { startX = maxArcLength / 2 - totalWidthPx; }
                 
                 const offsetDeg = customOffsets[index] || 0;
                 const offsetArcLength = (offsetDeg / 180) * Math.PI * currentR;
                 startX += offsetArcLength; 
 
-                const renderScale = dpr; 
-                const sliceWidth = isInteracting ? 4 : 0.8;
-                const overlapCompensation = isInteracting ? 0.5 : 0.2;
+                const scx = cx * dpr;
+                const scy = cy * dpr;
+                const sr = currentR * dpr;
 
-                const paddingX = fontSize; 
-                const hHeight = fontSize * 3;
-                const baselineY = fontSize * 1.5;
+                // 根据不同的模式来控制文字渲染
+                if (circleMode.value === 'vector') {
+                    // === SVG 矢量文字渲染逻辑（传统断开法） ===
+                    const pathId = `line-path-${index}`;
+                    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    path.setAttribute('id', pathId);
+                    
+                    let arcD = "";
+                    if (bendDown) {
+                        arcD = `M ${scx} ${scy+sr} A ${sr} ${sr} 0 1 1 ${scx+0.001} ${scy+sr}`;
+                    } else {
+                        arcD = `M ${scx} ${scy-sr} A ${sr} ${sr} 0 1 0 ${scx+0.001} ${scy-sr}`;
+                    }
+                    path.setAttribute('d', arcD);
+                    path.setAttribute('fill', 'none');
+                    defs.appendChild(path);
 
-                hiddenCanvas.width = Math.ceil((totalWidthPx + paddingX * 2) * renderScale);
-                hiddenCanvas.height = Math.ceil(hHeight * renderScale);
+                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    g.setAttribute('transform', `rotate(${offsetDeg}, ${scx}, ${scy})`);
 
-                hctx.scale(renderScale, renderScale);
-                hctx.font = fontString;
-                hctx.textBaseline = 'alphabetic';
-                hctx.fillStyle = ctx.fillStyle;
-                hctx.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
-                hctx.fillText(line, paddingX, baselineY);
+                    const textNode = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    textNode.style.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                    textNode.style.fontVariantLigatures = "contextual";
+                    textNode.style.fontFeatureSettings = '"calt" 1, "liga" 1';
+                    textNode.setAttribute('fill', '#111827');
+                    
+                    const textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
+                    textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${pathId}`);
+                    
+                    if (alignment === 'center') {
+                        textPath.setAttribute('startOffset', '50%');
+                        textNode.setAttribute('text-anchor', 'middle');
+                    } else if (alignment === 'left') {
+                        textPath.setAttribute('startOffset', '0%');
+                        textNode.setAttribute('text-anchor', 'start');
+                    } else if (alignment === 'right') {
+                        textPath.setAttribute('startOffset', '100%');
+                        textNode.setAttribute('text-anchor', 'end');
+                    }
+                    
+                    textPath.textContent = line;
+                    textNode.appendChild(textPath);
+                    g.appendChild(textNode);
+                    svgOverlay.appendChild(g);
 
-                const maxROuter = bendDown ? currentR + baselineY : currentR + (hHeight - baselineY);
-                const scaleFactor = maxROuter / currentR;
-                const destWidth = sliceWidth * scaleFactor + overlapCompensation; 
+                } else {
+                    // === Canvas 切片映射整体变形渲染逻辑（连字完美生效） ===
+                    const offscreen = document.createElement('canvas');
+                    const W_px = Math.ceil((totalWidthPx + fontSize) * dpr);
+                    const H_px = Math.ceil(fontSize * 2.5 * dpr);
+                    offscreen.width = Math.max(1, W_px);
+                    offscreen.height = Math.max(1, H_px);
+                    const oCtx = offscreen.getContext('2d');
 
-                for (let x = 0; x <= totalWidthPx + paddingX * 2; x += sliceWidth) {
-                    const mappedX = startX + (x - paddingX);
-                    const theta = mappedX / currentR;
+                    oCtx.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                    offscreen.style.fontVariantLigatures = "contextual"; 
+                    oCtx.fillStyle = '#111827';
+
+                    // ---------------- 修复区域开始 ----------------
+                    // 计算一个安全的基线高度 (距离顶部 60% 的高度，确保有足够的空间容纳上升部和下降部)
+                    const baseY = Math.ceil(H_px * 0.6); 
+                    oCtx.textBaseline = 'alphabetic'; // 对齐 SVG 的默认基线模式
+                    oCtx.fillText(line, 0, baseY);    // 在基线 baseY 处绘制纯净直线文本
 
                     ctx.save();
-                    ctx.translate(cx, cy);
+                    // 在 DPR 空间绘制变形，直接清空主矩阵的缩放以避免双重 DPR
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-                    if (bendDown) {
-                        ctx.rotate(theta);
-                        ctx.drawImage(hiddenCanvas,
-                            x * renderScale, 0, sliceWidth * renderScale, hHeight * renderScale,
-                            -destWidth / 2, -(currentR + baselineY), destWidth, hHeight
-                        );
-                    } else {
-                        ctx.rotate(-theta);
-                        ctx.drawImage(hiddenCanvas,
-                            x * renderScale, 0, sliceWidth * renderScale, hHeight * renderScale,
-                            -destWidth / 2, currentR - baselineY, destWidth, hHeight
-                        );
+                    // 为保证弧外圈没有锯齿空隙，切片宽度动态计算 (外弧长/内弧长比例)
+                    const stripW = Math.max(1.5, Math.ceil(2 * (sr + H_px / 2) / sr));
+
+                    for (let x = 0; x < Math.ceil(totalWidthPx * dpr); x += 1) {
+                        const x_arc_dpr = startX * dpr + x;
+                        const theta = x_arc_dpr / sr;
+
+                        let Bx, By, Tx, Ty, Nx, Ny;
+                        if (bendDown) {
+                            Bx = scx + sr * Math.sin(theta);
+                            By = scy - sr * Math.cos(theta);
+                            Tx = Math.cos(theta); Ty = Math.sin(theta);
+                            Nx = -Math.sin(theta); Ny = Math.cos(theta);
+                        } else {
+                            Bx = scx + sr * Math.sin(theta);
+                            By = scy + sr * Math.cos(theta);
+                            Tx = Math.cos(theta); Ty = -Math.sin(theta);
+                            Nx = Math.sin(theta); Ny = Math.cos(theta);
+                        }
+
+                        // 将矩阵转换定位到弧线上的这个坐标轴，并沿切线旋转
+                        ctx.setTransform(Tx, Ty, Nx, Ny, Bx, By);
+                        
+                        // 从离屏直线切出 1 px 数据，画在当前矩阵系下
+                        // 注意这里 Y 轴的起始偏移量改为 -baseY，保证映射后的基线精确落在 (Bx, By) 轨迹上
+                        ctx.drawImage(offscreen, x, 0, stripW, H_px, 0, -baseY, stripW, H_px);
                     }
+                    // ---------------- 修复区域结束 ----------------
                     ctx.restore();
                 }
 
+                // === 3. Canvas 参考线/辅助标记 ===
                 if (showLines.checked) {
                     ctx.beginPath();
                     ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
                     ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
+                    ctx.lineWidth = 1; ctx.stroke();
                 }
 
                 if (showCenters.checked) {
@@ -1005,101 +990,55 @@
                 }
 
                 if (showSpaces.checked) {
-                    const words = line.split(' ');
-                    let currentWordX = startX;
+                    const words = line.split(' '); let currentWordX = startX;
                     for (let i = 0; i < words.length; i++) {
-                        const word = words[i];
-                        const wordWidth = ctx.measureText(word).width;
+                        const word = words[i]; const wordWidth = ctx.measureText(word).width;
                         const markerX = currentWordX + wordWidth;
-                        
                         if (word.length > 0 || i === words.length - 1) {
                             const distMm = (markerX - startX) * mmPerPixel;
                             const p = mapPointToCircle(markerX, 15, currentR, cx, cy, bendDown);
                             drawMarker(p.x, p.y, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
                         }
-                        
-                        if (i < words.length - 1) {
-                            currentWordX += ctx.measureText(word + ' ').width;
-                        }
+                        if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
                     }
                 }
 
                 lineData.push({
-                    isCircle: true,
-                    index: index,
-                    r: currentR,
-                    startX: startX,
-                    endX: startX + totalWidthPx,
-                    cx: cx, cy: cy, bendDown: bendDown
+                    isCircle: true, index: index, r: currentR,
+                    startX: startX, endX: startX + totalWidthPx, cx: cx, cy: cy, bendDown: bendDown
                 });
 
                 currentR = isOutIn ? currentR - R_step : currentR + R_step;
             });
 
-            // === RADIUS MEASUREMENT OVERLAY ===
             if (showRadius.checked && lineData.length > 0) {
                 ctx.save();
-                const purple = '#8b5cf6';
-                ctx.strokeStyle = purple;
-                ctx.fillStyle = purple;
-                ctx.lineWidth = 1;
+                const purple = '#8b5cf6'; ctx.strokeStyle = purple; ctx.fillStyle = purple; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
 
-                // 绘制中心点
-                ctx.beginPath();
-                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 绘制向下的垂直测量基准线
                 const maxR = Math.max(...lineData.map(l => l.r));
-                ctx.beginPath();
-                ctx.setLineDash([4, 4]);
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx, cy + maxR + 25);
-                ctx.stroke();
-                ctx.setLineDash([]);
+                ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + maxR + 25); ctx.stroke(); ctx.setLineDash([]);
 
                 let prevR = 0;
                 lineData.forEach((line, i) => {
-                    const r = line.r;
-                    const markerY = cy + r;
+                    const r = line.r; const markerY = cy + r;
+                    ctx.beginPath(); ctx.moveTo(cx - 6, markerY); ctx.lineTo(cx + 6, markerY); ctx.stroke();
 
-                    // 绘制刻度线
-                    ctx.beginPath();
-                    ctx.moveTo(cx - 6, markerY);
-                    ctx.lineTo(cx + 6, markerY);
-                    ctx.stroke();
-
-                    // 构建标签文字 (基准R或增量Δ)
                     let text = '';
-                    if (i === 0) {
-                        text = `R: ${(r * mmPerPixel).toFixed(1)} mm`;
-                    } else {
-                        const diff = Math.abs(r - prevR);
-                        text = `Δ: ${(diff * mmPerPixel).toFixed(1)} mm`;
-                    }
+                    if (i === 0) { text = `R: ${(r * mmPerPixel).toFixed(1)} mm`; } 
+                    else { const diff = Math.abs(r - prevR); text = `Δ: ${(diff * mmPerPixel).toFixed(1)} mm`; }
 
-                    // 文字居中显示在两圈之间
-                    const midR = prevR + (r - prevR) / 2;
-                    const textY = cy + midR;
-
-                    ctx.font = `500 11.5px system-ui, -apple-system, sans-serif`;
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'middle';
-                    
-                    // 白色描边保证文字在复杂背景下可读
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-                    ctx.strokeText(text, cx - 10, textY);
+                    const midR = prevR + (r - prevR) / 2; const textY = cy + midR;
+                    ctx.font = `500 11.5px system-ui, -apple-system, sans-serif`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.strokeText(text, cx - 10, textY);
                     ctx.fillText(text, cx - 10, textY);
-
                     prevR = r;
                 });
-
                 ctx.restore();
             }
 
         } else {
-            // === STANDARD LINEAR LAYOUT ===
+            // === 直线排版（默认 SVG 渲染文字以保证一致性） ===
             let currentY = fontSize + padding;
 
             lines.forEach((line, index) => {
@@ -1108,50 +1047,44 @@
                 const totalWidthPx = ctx.measureText(line).width;
                 let startX = 0;
 
-                if (alignment === 'center') {
-                    startX = (contentWidth - totalWidthPx) / 2;
-                } else if (alignment === 'right') {
-                    startX = contentWidth - totalWidthPx - padding;
-                } else { 
-                    startX = padding;
-                }
+                if (alignment === 'center') { startX = (contentWidth - totalWidthPx) / 2; } 
+                else if (alignment === 'right') { startX = contentWidth - totalWidthPx - padding; } 
+                else { startX = padding; }
 
                 const offsetPct = customOffsets[index] || 0;
                 startX += (offsetPct / 100) * totalWidthPx;
+
+                const textNode = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                textNode.style.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                textNode.style.fontVariantLigatures = "contextual";
+                textNode.style.fontFeatureSettings = '"calt" 1, "liga" 1';
+                textNode.setAttribute('fill', '#111827');
+                
+                textNode.setAttribute('x', startX * dpr);
+                textNode.setAttribute('y', currentY * dpr);
+                textNode.textContent = line;
+                svgOverlay.appendChild(textNode);
                 
                 if (showLines.checked) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, currentY);
-                    ctx.lineTo(contentWidth, currentY);
-                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(0, currentY); ctx.lineTo(contentWidth, currentY);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
                 }
 
-                ctx.fillText(line, startX, currentY);
-
                 lineData.push({
-                    isCircle: false,
-                    index: index, yMin: currentY - fontSize, yMax: currentY + 30,
+                    isCircle: false, index: index, yMin: currentY - fontSize, yMax: currentY + 30,
                     startX: startX, endX: startX + totalWidthPx, baseY: currentY
                 });
 
                 if (showSpaces.checked) {
-                    const words = line.split(' ');
-                    let currentWordX = startX;
+                    const words = line.split(' '); let currentWordX = startX;
                     for (let i = 0; i < words.length; i++) {
-                        const word = words[i];
-                        const wordWidth = ctx.measureText(word).width;
+                        const word = words[i]; const wordWidth = ctx.measureText(word).width;
                         const markerX = currentWordX + wordWidth;
-                        
                         if (word.length > 0 || i === words.length - 1) {
                             const distMm = (markerX - startX) * mmPerPixel;
                             drawMarker(markerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
                         }
-                        
-                        if (i < words.length - 1) {
-                            currentWordX += ctx.measureText(word + ' ').width;
-                        }
+                        if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
                     }
                 }
 
@@ -1165,9 +1098,7 @@
             });
         }
         
-        if (selectedPoint) {
-            drawMarker(selectedPoint.x, selectedPoint.y, `${selectedPoint.mm.toFixed(2)} mm`, '#10b981', fontSize, true);
-        }
+        if (selectedPoint) { drawMarker(selectedPoint.x, selectedPoint.y, `${selectedPoint.mm.toFixed(2)} mm`, '#10b981', fontSize, true); }
 
         ctx.restore();
         saveSettings();
@@ -1179,74 +1110,42 @@
         const dotRadius = isCustom ? 3 : 2.5; 
         const fontSize = 10;
         
-        ctx.beginPath();
-        ctx.moveTo(x, y - lineLength); 
-        ctx.lineTo(x, y);
-        ctx.strokeStyle = color;
-        ctx.lineWidth = isCustom ? 1.5 : 1;
-        ctx.setLineDash(isCustom ? [] : [3, 3]); 
-        ctx.stroke();
-        ctx.setLineDash([]); 
+        ctx.beginPath(); ctx.moveTo(x, y - lineLength); ctx.lineTo(x, y);
+        ctx.strokeStyle = color; ctx.lineWidth = isCustom ? 1.5 : 1; ctx.setLineDash(isCustom ? [] : [3, 3]); ctx.stroke(); ctx.setLineDash([]); 
 
-        ctx.fillStyle = color;
-        ctx.beginPath();
-        ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.font = `400 ${fontSize}px system-ui, -apple-system, sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top'; 
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, dotRadius, 0, Math.PI * 2); ctx.fill();
+        ctx.font = `400 ${fontSize}px system-ui, -apple-system, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; 
+        
         const textY = y + 6; 
-        
-        ctx.lineJoin = 'round';
-        ctx.miterLimit = 2;
-        ctx.lineWidth = 2; 
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; 
-        ctx.strokeText(text, x, textY);
-        
-        ctx.fillStyle = color;
-        ctx.fillText(text, x, textY);
+        ctx.lineJoin = 'round'; ctx.miterLimit = 2; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; 
+        ctx.strokeText(text, x, textY); ctx.fillStyle = color; ctx.fillText(text, x, textY);
         ctx.restore();
     }
 
     function handleCanvasClick(e) {
         const rect = canvas.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+        const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
 
         if (useCircle.checked) {
-            let closestLine = null;
-            let minDist = Infinity;
-            let clickTheta = 0;
-            
+            let closestLine = null; let minDist = Infinity; let clickTheta = 0;
             lineData.forEach(line => {
-                const dx = mouseX - line.cx;
-                const dy = mouseY - line.cy;
+                const dx = mouseX - line.cx; const dy = mouseY - line.cy;
                 const distFromCenter = Math.sqrt(dx*dx + dy*dy);
                 const rDiff = Math.abs(distFromCenter - line.r);
-                
                 if (rDiff < minDist && rDiff < 40) {
-                    minDist = rDiff;
-                    closestLine = line;
-                    if (line.bendDown) {
-                        clickTheta = Math.atan2(dx, -dy);
-                    } else {
-                        clickTheta = Math.atan2(dx, dy);
-                    }
+                    minDist = rDiff; closestLine = line;
+                    clickTheta = line.bendDown ? Math.atan2(dx, -dy) : Math.atan2(dx, dy);
                 }
             });
 
             if (closestLine) {
                 let clickedX = clickTheta * closestLine.r;
                 const circ = 2 * Math.PI * closestLine.r;
-                
                 while (clickedX < closestLine.startX - circ/2) clickedX += circ;
                 while (clickedX > closestLine.startX + circ/2) clickedX -= circ;
 
                 const clampedX = Math.max(closestLine.startX, Math.min(clickedX, closestLine.endX));
-                const distPx = clampedX - closestLine.startX;
-                const distMm = distPx * mmPerPixel;
-                
+                const distPx = clampedX - closestLine.startX; const distMm = distPx * mmPerPixel;
                 const p = mapPointToCircle(clampedX, 15, closestLine.r, closestLine.cx, closestLine.cy, closestLine.bendDown);
                 selectedPoint = { x: p.x, y: p.y, mm: distMm };
                 render();
@@ -1255,8 +1154,7 @@
             const clickedLine = lineData.find(line => mouseY >= line.yMin && mouseY <= line.yMax);
             if (clickedLine) {
                 const clampedX = Math.max(clickedLine.startX, Math.min(mouseX, clickedLine.endX));
-                const distPx = clampedX - clickedLine.startX;
-                const distMm = distPx * mmPerPixel;
+                const distPx = clampedX - clickedLine.startX; const distMm = distPx * mmPerPixel;
                 selectedPoint = { x: clampedX, y: clickedLine.baseY + 15, mm: distMm };
                 render();
             }
@@ -1264,19 +1162,53 @@
     }
 
     function exportPNG() {
+        if (isExporting) return;
         isExporting = true;
         render(); 
+
+        const svgElement = document.getElementById('svgOverlay');
+        const svgClone = svgElement.cloneNode(true);
+        svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
         
-        const dataURL = canvas.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.download = `Typography_Export_${Date.now()}.png`;
-        link.href = dataURL;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        isExporting = false;
-        render();
+        if (isFontLoaded && fontBase64) {
+            const styleStr = `
+            <style>
+                @font-face {
+                    font-family: 'CustomRenderFont';
+                    src: url('data:font/opentype;base64,${fontBase64}');
+                }
+            </style>`;
+            svgClone.insertAdjacentHTML('afterbegin', styleStr);
+        }
+
+        const svgData = new XMLSerializer().serializeToString(svgClone);
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const URL = window.URL || window.webkitURL || window;
+        const blobURL = URL.createObjectURL(svgBlob);
+
+        const img = new Image();
+        img.onload = function() {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+            const tCtx = tempCanvas.getContext('2d');
+            
+            tCtx.drawImage(canvas, 0, 0); 
+            tCtx.drawImage(img, 0, 0);    
+            
+            const dataURL = tempCanvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.download = `Typography_Export_${Date.now()}.png`;
+            link.href = dataURL; link.click();
+            
+            URL.revokeObjectURL(blobURL);
+            isExporting = false;
+            render();
+        };
+        img.onerror = function() {
+            alert(i18nDict[currentLang].status_error || "Export failed.");
+            isExporting = false; render();
+        }
+        img.src = blobURL;
     }
 
     loadSettings();
