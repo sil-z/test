@@ -376,6 +376,13 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                <div class="toggle-row" id="radiusMeasureRow" style="display: none;">
+                    <span class="toggle-label" data-i18n="overlay_radius">Radius</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showRadius" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
         
@@ -403,7 +410,8 @@
             section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Actual Width (mm)",
             status_waiting: "Font not loaded...", status_fetching: "Fetching default...", status_parsing: "Parsing font data...",
             status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Warning: Metric unavailable",
-            section_overlay: "Measure", overlay_lines: "Guidelines", overlay_center: "Midpoint", overlay_space: "By Word", btn_export: "Export to PNG",
+            section_overlay: "Measure", overlay_lines: "Guidelines", overlay_center: "Midpoint", overlay_space: "By Word", 
+            overlay_radius: "Radius", btn_export: "Export to PNG",
             btn_website: "Personal Website"
         },
         zh: {
@@ -416,7 +424,8 @@
             section_calib: "校准", label_glyph: "基准字形", label_width: "实际尺寸 (mm)",
             status_waiting: "字体未导入...", status_fetching: "下载默认字体...", status_parsing: "解析字体数据...",
             status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "警告：无法读取",
-            section_overlay: "测量", overlay_lines: "辅助线", overlay_center: "中点", overlay_space: "逐词", btn_export: "导出为 PNG",
+            section_overlay: "测量", overlay_lines: "辅助线", overlay_center: "中点", overlay_space: "逐词", 
+            overlay_radius: "半径", btn_export: "导出为 PNG",
             btn_website: "个人主页"
         }
     };
@@ -473,6 +482,7 @@
     const showLines = document.getElementById('showLines');
     const showCenters = document.getElementById('showCenters');
     const showSpaces = document.getElementById('showSpaces');
+    const showRadius = document.getElementById('showRadius');
 
     const useCircle = document.getElementById('useCircle');
     const circleSettings = document.getElementById('circleSettings');
@@ -498,6 +508,7 @@
             showLines: showLines.checked,
             showCenters: showCenters.checked,
             showSpaces: showSpaces.checked,
+            showRadius: showRadius.checked,
             useCircle: useCircle.checked,
             circleRadius: radiusSlider.value,
             circleDir: circleDir.value,
@@ -531,10 +542,12 @@
                 if (state.showLines !== undefined) showLines.checked = state.showLines;
                 if (state.showCenters !== undefined) showCenters.checked = state.showCenters;
                 if (state.showSpaces !== undefined) showSpaces.checked = state.showSpaces;
+                if (state.showRadius !== undefined) showRadius.checked = state.showRadius;
                 
                 if (state.useCircle !== undefined) {
                     useCircle.checked = state.useCircle;
                     circleSettings.style.display = state.useCircle ? 'flex' : 'none';
+                    document.getElementById('radiusMeasureRow').style.display = state.useCircle ? 'flex' : 'none';
                 }
                 if (state.circleRadius !== undefined) { radiusSlider.value = state.circleRadius; document.getElementById('radiusVal').textContent = state.circleRadius; }
                 if (state.circleDir !== undefined) circleDir.value = state.circleDir;
@@ -614,11 +627,14 @@
     showLines.addEventListener('change', render);
     showCenters.addEventListener('change', render);
     showSpaces.addEventListener('change', render);
+    showRadius.addEventListener('change', render);
     calibCharInput.addEventListener('input', updateScaleAndRender);
     calibMmInput.addEventListener('input', updateScaleAndRender);
 
     useCircle.addEventListener('change', (e) => {
-        circleSettings.style.display = e.target.checked ? 'flex' : 'none';
+        const isCircle = e.target.checked;
+        circleSettings.style.display = isCircle ? 'flex' : 'none';
+        document.getElementById('radiusMeasureRow').style.display = isCircle ? 'flex' : 'none';
         updateOffsetsUI(); 
         render();
     });
@@ -900,7 +916,7 @@
         lineData = [];
 
         if (useCircle.checked) {
-            // === CIRCULAR LAYOUT (LOD Adaptive Slicing) ===
+            // === CIRCULAR LAYOUT ===
             let currentR = parseInt(radiusSlider.value) * viewScale;
             const R_step = fontSize * lhRatio; 
             const isOutIn = circleDir.value === 'in'; 
@@ -928,9 +944,7 @@
                 const offsetArcLength = (offsetDeg / 180) * Math.PI * currentR;
                 startX += offsetArcLength; 
 
-                // --- 回退暴力超采样，依赖 DPR 渲染原尺寸，节约成倍带宽高压 ---
                 const renderScale = dpr; 
-                // --- 核心防抖逻辑：滑动时 4px 切片（极快），静止时 0.8px 切片（极清） ---
                 const sliceWidth = isInteracting ? 4 : 0.8;
                 const overlapCompensation = isInteracting ? 0.5 : 0.2;
 
@@ -975,7 +989,6 @@
                     ctx.restore();
                 }
 
-                // --- 绘制全局辅助基线 ---
                 if (showLines.checked) {
                     ctx.beginPath();
                     ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
@@ -1023,6 +1036,68 @@
                 currentR = isOutIn ? currentR - R_step : currentR + R_step;
             });
 
+            // === RADIUS MEASUREMENT OVERLAY ===
+            if (showRadius.checked && lineData.length > 0) {
+                ctx.save();
+                const purple = '#8b5cf6';
+                ctx.strokeStyle = purple;
+                ctx.fillStyle = purple;
+                ctx.lineWidth = 1;
+
+                // 绘制中心点
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 绘制向下的垂直测量基准线
+                const maxR = Math.max(...lineData.map(l => l.r));
+                ctx.beginPath();
+                ctx.setLineDash([4, 4]);
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx, cy + maxR + 25);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                let prevR = 0;
+                lineData.forEach((line, i) => {
+                    const r = line.r;
+                    const markerY = cy + r;
+
+                    // 绘制刻度线
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 6, markerY);
+                    ctx.lineTo(cx + 6, markerY);
+                    ctx.stroke();
+
+                    // 构建标签文字 (基准R或增量Δ)
+                    let text = '';
+                    if (i === 0) {
+                        text = `R: ${(r * mmPerPixel).toFixed(1)} mm`;
+                    } else {
+                        const diff = Math.abs(r - prevR);
+                        text = `Δ: ${(diff * mmPerPixel).toFixed(1)} mm`;
+                    }
+
+                    // 文字居中显示在两圈之间
+                    const midR = prevR + (r - prevR) / 2;
+                    const textY = cy + midR;
+
+                    ctx.font = `500 11.5px system-ui, -apple-system, sans-serif`;
+                    ctx.textAlign = 'right';
+                    ctx.textBaseline = 'middle';
+                    
+                    // 白色描边保证文字在复杂背景下可读
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.strokeText(text, cx - 10, textY);
+                    ctx.fillText(text, cx - 10, textY);
+
+                    prevR = r;
+                });
+
+                ctx.restore();
+            }
+
         } else {
             // === STANDARD LINEAR LAYOUT ===
             let currentY = fontSize + padding;
@@ -1044,7 +1119,6 @@
                 const offsetPct = customOffsets[index] || 0;
                 startX += (offsetPct / 100) * totalWidthPx;
                 
-                // --- 绘制全局辅助基线 ---
                 if (showLines.checked) {
                     ctx.beginPath();
                     ctx.moveTo(0, currentY);
