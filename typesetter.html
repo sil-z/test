@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Penman's Typesetter by Silhouette</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/opentype.js/1.3.4/opentype.min.js"></script>
-    
     <style>
         :root {
             --bg-body: #f3f4f6;
@@ -89,7 +88,7 @@
             line-height: 16px;
         }
 
-        input[type="text"], input[type="number"], textarea {
+        input[type="text"], input[type="number"], textarea, select {
             width: 100%; font-size: 13px; padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
@@ -97,7 +96,7 @@
             transition: var(--transition); font-family: var(--font-stack); 
         }
         
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
             outline: none; 
             border-color: #a1a1aa; 
             background-color: #fff;
@@ -105,6 +104,7 @@
         }
         
         textarea { resize: vertical; min-height: 70px; line-height: 1.5; white-space: pre; }
+        select { height: 35px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%236b7280%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E"); background-repeat: no-repeat; background-position: right 10px top 50%; background-size: 10px auto; padding-right: 30px; }
         
         .custom-select-container {
             position: relative; width: 100%; font-family: var(--font-stack);
@@ -189,7 +189,8 @@
             max-height: 120px; overflow-y: auto;
         }
         .line-offset-item { display: flex; align-items: center; gap: 8px; }
-        .line-offset-item span { font-size: 11px; color: var(--text-muted); width: 24px; text-align: right; }
+        .line-offset-item span.line-label { font-size: 11px; color: var(--text-muted); width: 20px; text-align: right; }
+        .line-offset-item span.val-label { font-size: 11px; color: var(--accent); width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
 
         #scaleInfo {
             font-size: 11.5px; color: var(--text-muted); background: var(--bg-body); 
@@ -233,6 +234,11 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+        
+        .settings-box {
+            display: flex; flex-direction: column; gap: 12px; margin-top: 8px; padding: 12px;
+            background: #fafafa; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+        }
     </style>
 </head>
 <body>
@@ -265,7 +271,7 @@
                 <div class="grid-row" style="margin-top: 4px;">
                     <div>
                         <label class="block-label label-with-value"><span data-i18n="label_size">Size: </span><span id="sizeVal" class="val-text">120</span></label>
-                        <input type="range" id="sizeSlider" min="40" max="400" value="120">
+                        <input type="range" id="sizeSlider" min="10" max="180" value="120">
                     </div>
                     <div>
                         <label class="block-label label-with-value"><span data-i18n="label_lh">Line H: </span><span id="lhVal" class="val-text">1.5</span></label>
@@ -295,6 +301,42 @@
                     <button class="btn" id="resetOffsetsBtn" style="width:100%; margin-top: 8px;" data-i18n="btn_reset">Reset</button>
                 </div>
             </div>
+            
+            <div class="property-group">
+                <span class="property-title" data-i18n="section_circle">Circular Layout</span>
+                <div class="toggle-row">
+                    <span class="toggle-label" data-i18n="enable_circle">Enable Circular</span>
+                    <label class="switch">
+                        <input type="checkbox" id="useCircle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div id="circleSettings" class="settings-box" style="display: none;">
+                    <div>
+                        <label class="block-label label-with-value">
+                            <span data-i18n="circle_radius">Start Radius: </span><span id="radiusVal" class="val-text">300</span>
+                        </label>
+                        <input type="range" id="radiusSlider" min="50" max="3000" value="500">
+                    </div>
+                    <div class="grid-row">
+                        <div>
+                            <label class="block-label" data-i18n="circle_dir">Direction</label>
+                            <select id="circleDir">
+                                <option value="in" data-i18n="dir_in">Outside-In</option>
+                                <option value="out" data-i18n="dir_out">Inside-Out</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block-label" data-i18n="circle_bend">Bend Direction</label>
+                            <select id="circleBend">
+                                <option value="down" data-i18n="bend_down">Forward</option>
+                                <option value="up" data-i18n="bend_up">Backward</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="property-group">
                 <span class="property-title" data-i18n="section_calib">Calibration</span>
@@ -313,6 +355,13 @@
 
             <div class="property-group">
                 <span class="property-title" data-i18n="section_overlay">Measure</span>
+                <div class="toggle-row">
+                    <span class="toggle-label" data-i18n="overlay_lines">Baselines</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showLines" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 <div class="toggle-row">
                     <span class="toggle-label" data-i18n="overlay_center">Center Axis</span>
                     <label class="switch">
@@ -346,22 +395,28 @@
     const i18nDict = {
         en: {
             title: "Penman's Typesetter", section_font: "Font Source", upload_btn: "Upload File...", preset_btn: "Default",
-            section_text: "Content & Layout", label_size: "Size: ", label_lh: "Line H: ", label_align: "Alignment",
+            section_text: "Content & Layout", label_size: "Zoom: ", label_lh: "Line H: ", label_align: "Alignment",
             align_left: "Left", align_center: "Center", align_right: "Right", label_offsets: "Line Offsets", btn_reset: "Reset",
+            section_circle: "Circular Layout", enable_circle: "Enable Circular", circle_radius: "Base Radius: ", 
+            circle_dir: "Direction", dir_in: "Outside-In", dir_out: "Inside-Out", 
+            circle_bend: "Bend Direction", bend_down: "Forward", bend_up: "Backward",
             section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Actual Width (mm)",
             status_waiting: "Font not loaded...", status_fetching: "Fetching default...", status_parsing: "Parsing font data...",
             status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Warning: Metric unavailable",
-            section_overlay: "Measure", overlay_center: "Center Axis", overlay_space: "By Word", btn_export: "Export to PNG",
+            section_overlay: "Measure", overlay_lines: "Guidelines", overlay_center: "Midpoint", overlay_space: "By Word", btn_export: "Export to PNG",
             btn_website: "Personal Website"
         },
         zh: {
             title: "书法字体排版器", section_font: "字体源", upload_btn: "上传文件...", preset_btn: "加载默认",
-            section_text: "内容与排版", label_size: "字号: ", label_lh: "行距: ", label_align: "对齐方式",
+            section_text: "内容与排版", label_size: "缩放：", label_lh: "行距：", label_align: "对齐方式",
             align_left: "左对齐", align_center: "居中", align_right: "右对齐", label_offsets: "逐行偏移", btn_reset: "重置偏移",
+            section_circle: "圆弧排版", enable_circle: "启用圆弧排版", circle_radius: "基础半径：", 
+            circle_dir: "排版方向", dir_in: "由外向内", dir_out: "由内向外", 
+            circle_bend: "变形方向", bend_down: "正向", bend_up: "反向",
             section_calib: "校准", label_glyph: "基准字形", label_width: "实际尺寸 (mm)",
             status_waiting: "字体未导入...", status_fetching: "下载默认字体...", status_parsing: "解析字体数据...",
-            status_error: "加载失败", scale_format: "比例: 1px ≈ {val} mm", scale_warn: "警告: 无法读取",
-            section_overlay: "测量", overlay_center: "中心轴线", overlay_space: "逐词", btn_export: "导出 PNG",
+            status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "警告：无法读取",
+            section_overlay: "测量", overlay_lines: "辅助线", overlay_center: "中点", overlay_space: "逐词", btn_export: "导出为 PNG",
             btn_website: "个人主页"
         }
     };
@@ -376,9 +431,34 @@
     let lineData = [];
     let customOffsets = []; 
 
+    // --- 性能优化：交互防抖状态 ---
+    let isInteracting = false;
+    let interactTimer = null;
+
+    function triggerInteraction() {
+        if (!isInteracting) {
+            isInteracting = true;
+        }
+        clearTimeout(interactTimer);
+        interactTimer = setTimeout(() => {
+            isInteracting = false;
+            render(); // 静止后触发一次高清重绘
+        }, 150);
+    }
+
     const canvasContainer = document.getElementById('canvasContainer');
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    
+    // 初始化离屏 Canvas 用于 calt 特性渲染
+    const hiddenCanvas = document.createElement('canvas');
+    hiddenCanvas.style.position = 'absolute';
+    hiddenCanvas.style.visibility = 'hidden';
+    hiddenCanvas.style.pointerEvents = 'none';
+    hiddenCanvas.style.fontVariantLigatures = "contextual";
+    hiddenCanvas.style.fontFeatureSettings = '"calt" 1, "liga" 1';
+    document.body.appendChild(hiddenCanvas);
+    const hctx = hiddenCanvas.getContext('2d', { willReadFrequently: true });
     
     const textInput = document.getElementById('textInput');
     const calibCharInput = document.getElementById('calibChar');
@@ -389,8 +469,16 @@
     const lhSlider = document.getElementById('lhSlider');
     const alignSelectInput = document.getElementById('alignSelect'); 
     const offsetContainer = document.getElementById('offsetContainer');
+    
+    const showLines = document.getElementById('showLines');
     const showCenters = document.getElementById('showCenters');
     const showSpaces = document.getElementById('showSpaces');
+
+    const useCircle = document.getElementById('useCircle');
+    const circleSettings = document.getElementById('circleSettings');
+    const radiusSlider = document.getElementById('radiusSlider');
+    const circleDir = document.getElementById('circleDir');
+    const circleBend = document.getElementById('circleBend');
 
     const alignContainer = document.getElementById('alignSelectContainer');
     const alignTrigger = document.getElementById('alignSelectTrigger');
@@ -407,8 +495,13 @@
             offsets: customOffsets,
             calibChar: calibCharInput.value,
             calibMm: calibMmInput.value,
+            showLines: showLines.checked,
             showCenters: showCenters.checked,
             showSpaces: showSpaces.checked,
+            useCircle: useCircle.checked,
+            circleRadius: radiusSlider.value,
+            circleDir: circleDir.value,
+            circleBend: circleBend.value,
             lang: currentLang
         };
         localStorage.setItem('penmanSettings', JSON.stringify(state));
@@ -435,8 +528,18 @@
                 if (state.offsets !== undefined) customOffsets = state.offsets;
                 if (state.calibChar !== undefined) calibCharInput.value = state.calibChar;
                 if (state.calibMm !== undefined) calibMmInput.value = state.calibMm;
+                if (state.showLines !== undefined) showLines.checked = state.showLines;
                 if (state.showCenters !== undefined) showCenters.checked = state.showCenters;
                 if (state.showSpaces !== undefined) showSpaces.checked = state.showSpaces;
+                
+                if (state.useCircle !== undefined) {
+                    useCircle.checked = state.useCircle;
+                    circleSettings.style.display = state.useCircle ? 'flex' : 'none';
+                }
+                if (state.circleRadius !== undefined) { radiusSlider.value = state.circleRadius; document.getElementById('radiusVal').textContent = state.circleRadius; }
+                if (state.circleDir !== undefined) circleDir.value = state.circleDir;
+                if (state.circleBend !== undefined) circleBend.value = state.circleBend;
+
                 if (state.lang !== undefined) currentLang = state.lang;
             } catch(e) {}
         }
@@ -446,7 +549,17 @@
         document.getElementById('langBtn').textContent = currentLang === 'en' ? '中文' : 'EN';
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (i18nDict[currentLang][key]) el.textContent = i18nDict[currentLang][key];
+            if (i18nDict[currentLang][key]) {
+                if (el.tagName === 'OPTION') {
+                    el.textContent = i18nDict[currentLang][key];
+                } else {
+                    el.childNodes.forEach(child => {
+                        if (child.nodeType === 3 && child.textContent.trim().length > 0) {
+                            child.textContent = i18nDict[currentLang][key];
+                        }
+                    });
+                }
+            }
         });
         if (currentOpentypeFont && fontFileName) document.getElementById('uploadLabel').textContent = fontFileName;
         
@@ -498,10 +611,25 @@
     document.getElementById('exportBtn').addEventListener('click', exportPNG);
     document.getElementById('resetOffsetsBtn').addEventListener('click', () => { customOffsets = []; updateOffsetsUI(); render(); });
     
+    showLines.addEventListener('change', render);
     showCenters.addEventListener('change', render);
     showSpaces.addEventListener('change', render);
     calibCharInput.addEventListener('input', updateScaleAndRender);
     calibMmInput.addEventListener('input', updateScaleAndRender);
+
+    useCircle.addEventListener('change', (e) => {
+        circleSettings.style.display = e.target.checked ? 'flex' : 'none';
+        updateOffsetsUI(); 
+        render();
+    });
+    
+    radiusSlider.addEventListener('input', (e) => {
+        document.getElementById('radiusVal').textContent = e.target.value;
+        triggerInteraction();
+        render();
+    });
+    circleDir.addEventListener('change', render);
+    circleBend.addEventListener('change', render);
     
     let isPanning = false;
     let startX, startY, scrollLeft, scrollTop;
@@ -537,19 +665,58 @@
     canvasContainer.addEventListener('mouseup', (e) => { if (e.button === 1) stopPanning(); });
     canvasContainer.addEventListener('mouseleave', stopPanning);
 
+    canvasContainer.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        triggerInteraction();
+        
+        const rect = canvasContainer.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const currentScrollX = canvasContainer.scrollLeft;
+        const currentScrollY = canvasContainer.scrollTop;
+
+        const canvasMouseX = currentScrollX + mouseX;
+        const canvasMouseY = currentScrollY + mouseY;
+
+        const oldSize = parseInt(sizeSlider.value);
+        let delta = e.deltaY < 0 ? 1 : -1;
+        let step = oldSize >= 100 ? 10 : 5;
+        let newSize = oldSize + delta * step;
+        
+        if (newSize < 10) newSize = 10;
+        if (newSize > 180) newSize = 180;
+
+        if (newSize !== oldSize) {
+            sizeSlider.value = newSize;
+            document.getElementById('sizeVal').textContent = newSize;
+            
+            const scaleRatio = newSize / oldSize;
+            updateScaleAndRender();
+            
+            requestAnimationFrame(() => {
+                canvasContainer.scrollLeft = canvasMouseX * scaleRatio - mouseX;
+                canvasContainer.scrollTop = canvasMouseY * scaleRatio - mouseY;
+            });
+        }
+    }, { passive: false });
+
     textInput.addEventListener('input', () => { 
         selectedPoint = null; 
         updateOffsetsUI(); 
+        triggerInteraction();
         render(); 
     });
 
     sizeSlider.addEventListener('input', (e) => {
         document.getElementById('sizeVal').textContent = e.target.value;
+        triggerInteraction();
         updateScaleAndRender(); 
     });
 
     lhSlider.addEventListener('input', (e) => {
         document.getElementById('lhVal').textContent = e.target.value;
+        triggerInteraction();
         render();
     });
 
@@ -561,17 +728,30 @@
         while(customOffsets.length < lines.length) customOffsets.push(0);
         while(customOffsets.length > lines.length) customOffsets.pop();
 
+        const isCircle = useCircle.checked;
+        const minVal = isCircle ? -180 : -100;
+        const maxVal = isCircle ? 180 : 100;
+        const unit = isCircle ? '°' : '%';
+
         offsetContainer.innerHTML = '';
         lines.forEach((line, i) => {
+            if (customOffsets[i] < minVal) customOffsets[i] = minVal;
+            if (customOffsets[i] > maxVal) customOffsets[i] = maxVal;
+
             const item = document.createElement('div');
             item.className = 'line-offset-item';
             item.innerHTML = `
-                <span>L${i+1}</span>
-                <input type="range" min="-300" max="300" value="${customOffsets[i]}" data-idx="${i}">
+                <span class="line-label">L${i+1}</span>
+                <input type="range" min="${minVal}" max="${maxVal}" value="${customOffsets[i]}" data-idx="${i}">
+                <span class="val-label">${customOffsets[i]}${unit}</span>
             `;
             const slider = item.querySelector('input');
+            const valLabel = item.querySelector('.val-label');
+            
             slider.addEventListener('input', (e) => {
                 customOffsets[i] = parseInt(e.target.value);
+                valLabel.textContent = customOffsets[i] + unit;
+                triggerInteraction();
                 render();
             });
             offsetContainer.appendChild(item);
@@ -619,6 +799,16 @@
         }
     }
 
+    function mapPointToCircle(x, y, R, cx, cy, bendDown) {
+        const theta = x / R;
+        const r = bendDown ? (R - y) : (R + y);
+        if (bendDown) {
+            return { x: cx + r * Math.sin(theta), y: cy - r * Math.cos(theta) };
+        } else {
+            return { x: cx + r * Math.sin(theta), y: cy + r * Math.cos(theta) };
+        }
+    }
+
     function updateScaleAndRender() {
         const currentFontSize = parseInt(sizeSlider.value);
         const t = i18nDict[currentLang];
@@ -655,25 +845,39 @@
         if (rect.width === 0 || rect.height === 0) return;
 
         const lines = textInput.value.split('\n');
+        
         const fontSize = parseInt(sizeSlider.value);
+        const viewScale = fontSize / 100;
+        
         const lhRatio = parseFloat(lhSlider.value);
         const alignment = alignSelectInput.value; 
-        const padding = 60; 
+        const padding = 60 * viewScale; 
         
         const fontString = `${fontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
-        
         ctx.font = fontString;
-        let maxTextWidth = 0;
-        lines.forEach(line => {
-            if (line) {
-                const w = ctx.measureText(line).width;
-                if (w > maxTextWidth) maxTextWidth = w;
-            }
-        });
 
-        let maxAbsOffset = Math.max(...customOffsets.map(Math.abs), 0);
-        const contentWidth = Math.max(rect.width, maxTextWidth + padding * 2 + maxAbsOffset * 2);
-        const contentHeight = Math.max(rect.height, lines.length * fontSize * lhRatio + padding * 2);
+        let contentWidth = rect.width;
+        let contentHeight = rect.height;
+
+        if (useCircle.checked) {
+            const startR = parseInt(radiusSlider.value) * viewScale;
+            const R_step = fontSize * lhRatio;
+            const maxR = startR + (lines.length * R_step); 
+            const neededSize = (maxR * 2) + padding * 2;
+            contentWidth = Math.max(rect.width, neededSize);
+            contentHeight = Math.max(rect.height, neededSize);
+        } else {
+            let maxTextWidth = 0;
+            lines.forEach(line => {
+                if (line) {
+                    const w = ctx.measureText(line).width;
+                    if (w > maxTextWidth) maxTextWidth = w;
+                }
+            });
+            const maxAbsOffsetPct = customOffsets.length ? Math.max(...customOffsets.map(Math.abs)) / 100 : 0;
+            contentWidth = Math.max(rect.width, maxTextWidth + padding * 2 + (maxTextWidth * maxAbsOffsetPct) * 2);
+            contentHeight = Math.max(rect.height, lines.length * fontSize * lhRatio + padding * 2);
+        }
         
         const dpr = window.devicePixelRatio || 1;
         canvas.width = contentWidth * dpr;
@@ -683,7 +887,6 @@
 
         ctx.save();
         ctx.scale(dpr, dpr);
-        
         ctx.clearRect(0, 0, contentWidth, contentHeight);
 
         if (!isExporting) {
@@ -694,92 +897,241 @@
         ctx.font = fontString;
         ctx.textBaseline = 'alphabetic';
         ctx.fillStyle = '#111827';
-
         lineData = [];
-        let currentY = fontSize + padding;
 
-        lines.forEach((line, index) => {
-            if (!line) { currentY += fontSize * lhRatio; return; }
+        if (useCircle.checked) {
+            // === CIRCULAR LAYOUT (LOD Adaptive Slicing) ===
+            let currentR = parseInt(radiusSlider.value) * viewScale;
+            const R_step = fontSize * lhRatio; 
+            const isOutIn = circleDir.value === 'in'; 
+            const bendDown = circleBend.value === 'down';
+            
+            const cx = contentWidth / 2;
+            const cy = contentHeight / 2;
 
-            const totalWidthPx = ctx.measureText(line).width;
-            let startX = 0;
+            lines.forEach((line, index) => {
+                if (!line) { currentR = isOutIn ? currentR - R_step : currentR + R_step; return; }
+                
+                const totalWidthPx = ctx.measureText(line).width;
+                const maxArcLength = 2 * Math.PI * currentR;
+                
+                let startX = 0;
+                if (alignment === 'center') {
+                    startX = -totalWidthPx / 2;
+                } else if (alignment === 'left') {
+                    startX = -maxArcLength / 2;
+                } else if (alignment === 'right') {
+                    startX = maxArcLength / 2 - totalWidthPx;
+                }
+                
+                const offsetDeg = customOffsets[index] || 0;
+                const offsetArcLength = (offsetDeg / 180) * Math.PI * currentR;
+                startX += offsetArcLength; 
 
-            if (alignment === 'center') {
-                startX = (contentWidth - totalWidthPx) / 2;
-            } else if (alignment === 'right') {
-                startX = contentWidth - totalWidthPx - padding;
-            } else { 
-                startX = padding;
-            }
+                // --- 回退暴力超采样，依赖 DPR 渲染原尺寸，节约成倍带宽高压 ---
+                const renderScale = dpr; 
+                // --- 核心防抖逻辑：滑动时 4px 切片（极快），静止时 0.8px 切片（极清） ---
+                const sliceWidth = isInteracting ? 4 : 0.8;
+                const overlapCompensation = isInteracting ? 0.5 : 0.2;
 
-            startX += customOffsets[index] || 0;
+                const paddingX = fontSize; 
+                const hHeight = fontSize * 3;
+                const baselineY = fontSize * 1.5;
 
-            ctx.fillText(line, startX, currentY);
+                hiddenCanvas.width = Math.ceil((totalWidthPx + paddingX * 2) * renderScale);
+                hiddenCanvas.height = Math.ceil(hHeight * renderScale);
 
-            lineData.push({
-                index: index, yMin: currentY - fontSize, yMax: currentY + 30,
-                startX: startX, endX: startX + totalWidthPx, baseY: currentY
-            });
+                hctx.scale(renderScale, renderScale);
+                hctx.font = fontString;
+                hctx.textBaseline = 'alphabetic';
+                hctx.fillStyle = ctx.fillStyle;
+                hctx.clearRect(0, 0, hiddenCanvas.width, hiddenCanvas.height);
+                hctx.fillText(line, paddingX, baselineY);
 
-            if (showSpaces.checked) {
-                const words = line.split(' ');
-                let currentWordX = startX;
-                for (let i = 0; i < words.length; i++) {
-                    const word = words[i];
-                    const wordWidth = ctx.measureText(word).width;
-                    const markerX = currentWordX + wordWidth;
-                    
-                    if (word.length > 0 || i === words.length - 1) {
-                        const distMm = (markerX - startX) * mmPerPixel;
-                        drawMarker(markerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
+                const maxROuter = bendDown ? currentR + baselineY : currentR + (hHeight - baselineY);
+                const scaleFactor = maxROuter / currentR;
+                const destWidth = sliceWidth * scaleFactor + overlapCompensation; 
+
+                for (let x = 0; x <= totalWidthPx + paddingX * 2; x += sliceWidth) {
+                    const mappedX = startX + (x - paddingX);
+                    const theta = mappedX / currentR;
+
+                    ctx.save();
+                    ctx.translate(cx, cy);
+
+                    if (bendDown) {
+                        ctx.rotate(theta);
+                        ctx.drawImage(hiddenCanvas,
+                            x * renderScale, 0, sliceWidth * renderScale, hHeight * renderScale,
+                            -destWidth / 2, -(currentR + baselineY), destWidth, hHeight
+                        );
+                    } else {
+                        ctx.rotate(-theta);
+                        ctx.drawImage(hiddenCanvas,
+                            x * renderScale, 0, sliceWidth * renderScale, hHeight * renderScale,
+                            -destWidth / 2, currentR - baselineY, destWidth, hHeight
+                        );
                     }
-                    
-                    if (i < words.length - 1) {
-                        currentWordX += ctx.measureText(word + ' ').width;
+                    ctx.restore();
+                }
+
+                // --- 绘制全局辅助基线 ---
+                if (showLines.checked) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                if (showCenters.checked) {
+                    const centerX = startX + totalWidthPx / 2;
+                    const distMm = (totalWidthPx / 2) * mmPerPixel;
+                    const centerP = mapPointToCircle(centerX, 15, currentR, cx, cy, bendDown);
+                    drawMarker(centerP.x, centerP.y, `${distMm.toFixed(1)} mm`, '#ef4444', fontSize);
+                }
+
+                if (showSpaces.checked) {
+                    const words = line.split(' ');
+                    let currentWordX = startX;
+                    for (let i = 0; i < words.length; i++) {
+                        const word = words[i];
+                        const wordWidth = ctx.measureText(word).width;
+                        const markerX = currentWordX + wordWidth;
+                        
+                        if (word.length > 0 || i === words.length - 1) {
+                            const distMm = (markerX - startX) * mmPerPixel;
+                            const p = mapPointToCircle(markerX, 15, currentR, cx, cy, bendDown);
+                            drawMarker(p.x, p.y, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
+                        }
+                        
+                        if (i < words.length - 1) {
+                            currentWordX += ctx.measureText(word + ' ').width;
+                        }
                     }
                 }
-            }
 
-            if (showCenters.checked) {
-                const centerX = startX + totalWidthPx / 2;
-                const distMm = (totalWidthPx / 2) * mmPerPixel;
-                drawMarker(centerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#ef4444', fontSize);
-            }
+                lineData.push({
+                    isCircle: true,
+                    index: index,
+                    r: currentR,
+                    startX: startX,
+                    endX: startX + totalWidthPx,
+                    cx: cx, cy: cy, bendDown: bendDown
+                });
 
-            currentY += fontSize * lhRatio;
-        });
+                currentR = isOutIn ? currentR - R_step : currentR + R_step;
+            });
 
+        } else {
+            // === STANDARD LINEAR LAYOUT ===
+            let currentY = fontSize + padding;
+
+            lines.forEach((line, index) => {
+                if (!line) { currentY += fontSize * lhRatio; return; }
+
+                const totalWidthPx = ctx.measureText(line).width;
+                let startX = 0;
+
+                if (alignment === 'center') {
+                    startX = (contentWidth - totalWidthPx) / 2;
+                } else if (alignment === 'right') {
+                    startX = contentWidth - totalWidthPx - padding;
+                } else { 
+                    startX = padding;
+                }
+
+                const offsetPct = customOffsets[index] || 0;
+                startX += (offsetPct / 100) * totalWidthPx;
+                
+                // --- 绘制全局辅助基线 ---
+                if (showLines.checked) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, currentY);
+                    ctx.lineTo(contentWidth, currentY);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                ctx.fillText(line, startX, currentY);
+
+                lineData.push({
+                    isCircle: false,
+                    index: index, yMin: currentY - fontSize, yMax: currentY + 30,
+                    startX: startX, endX: startX + totalWidthPx, baseY: currentY
+                });
+
+                if (showSpaces.checked) {
+                    const words = line.split(' ');
+                    let currentWordX = startX;
+                    for (let i = 0; i < words.length; i++) {
+                        const word = words[i];
+                        const wordWidth = ctx.measureText(word).width;
+                        const markerX = currentWordX + wordWidth;
+                        
+                        if (word.length > 0 || i === words.length - 1) {
+                            const distMm = (markerX - startX) * mmPerPixel;
+                            drawMarker(markerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#3b82f6', fontSize);
+                        }
+                        
+                        if (i < words.length - 1) {
+                            currentWordX += ctx.measureText(word + ' ').width;
+                        }
+                    }
+                }
+
+                if (showCenters.checked) {
+                    const centerX = startX + totalWidthPx / 2;
+                    const distMm = (totalWidthPx / 2) * mmPerPixel;
+                    drawMarker(centerX, currentY + 15, `${distMm.toFixed(1)} mm`, '#ef4444', fontSize);
+                }
+
+                currentY += fontSize * lhRatio;
+            });
+        }
+        
         if (selectedPoint) {
             drawMarker(selectedPoint.x, selectedPoint.y, `${selectedPoint.mm.toFixed(2)} mm`, '#10b981', fontSize, true);
         }
 
         ctx.restore();
-        
         saveSettings();
     }
 
     function drawMarker(x, y, text, color, baseFontSize, isCustom = false) {
         ctx.save();
+        const lineLength = Math.min(baseFontSize * 0.2, 35);
+        const dotRadius = isCustom ? 3 : 2.5; 
+        const fontSize = 10;
+        
         ctx.beginPath();
-        ctx.moveTo(x, y - Math.min(baseFontSize * 0.35, 80)); 
+        ctx.moveTo(x, y - lineLength); 
         ctx.lineTo(x, y);
         ctx.strokeStyle = color;
-        ctx.lineWidth = isCustom ? 2 : 1.5;
-        ctx.setLineDash(isCustom ? [] : [4, 4]);
+        ctx.lineWidth = isCustom ? 1.5 : 1;
+        ctx.setLineDash(isCustom ? [] : [3, 3]); 
         ctx.stroke();
         ctx.setLineDash([]); 
 
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+        ctx.arc(x, y, dotRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.font = '500 12px system-ui, -apple-system, sans-serif';
+        ctx.font = `400 ${fontSize}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = 'white';
-        ctx.strokeText(text, x, y + 20);
-        ctx.fillText(text, x, y + 20);
+        ctx.textBaseline = 'top'; 
+        const textY = y + 6; 
+        
+        ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
+        ctx.lineWidth = 2; 
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; 
+        ctx.strokeText(text, x, textY);
+        
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, textY);
         ctx.restore();
     }
 
@@ -788,14 +1140,52 @@
         const mouseX = e.clientX - rect.left;
         const mouseY = e.clientY - rect.top;
 
-        const clickedLine = lineData.find(line => mouseY >= line.yMin && mouseY <= line.yMax);
+        if (useCircle.checked) {
+            let closestLine = null;
+            let minDist = Infinity;
+            let clickTheta = 0;
+            
+            lineData.forEach(line => {
+                const dx = mouseX - line.cx;
+                const dy = mouseY - line.cy;
+                const distFromCenter = Math.sqrt(dx*dx + dy*dy);
+                const rDiff = Math.abs(distFromCenter - line.r);
+                
+                if (rDiff < minDist && rDiff < 40) {
+                    minDist = rDiff;
+                    closestLine = line;
+                    if (line.bendDown) {
+                        clickTheta = Math.atan2(dx, -dy);
+                    } else {
+                        clickTheta = Math.atan2(dx, dy);
+                    }
+                }
+            });
 
-        if (clickedLine) {
-            const clampedX = Math.max(clickedLine.startX, Math.min(mouseX, clickedLine.endX));
-            const distPx = clampedX - clickedLine.startX;
-            const distMm = distPx * mmPerPixel;
-            selectedPoint = { x: clampedX, y: clickedLine.baseY + 15, mm: distMm };
-            render();
+            if (closestLine) {
+                let clickedX = clickTheta * closestLine.r;
+                const circ = 2 * Math.PI * closestLine.r;
+                
+                while (clickedX < closestLine.startX - circ/2) clickedX += circ;
+                while (clickedX > closestLine.startX + circ/2) clickedX -= circ;
+
+                const clampedX = Math.max(closestLine.startX, Math.min(clickedX, closestLine.endX));
+                const distPx = clampedX - closestLine.startX;
+                const distMm = distPx * mmPerPixel;
+                
+                const p = mapPointToCircle(clampedX, 15, closestLine.r, closestLine.cx, closestLine.cy, closestLine.bendDown);
+                selectedPoint = { x: p.x, y: p.y, mm: distMm };
+                render();
+            }
+        } else {
+            const clickedLine = lineData.find(line => mouseY >= line.yMin && mouseY <= line.yMax);
+            if (clickedLine) {
+                const clampedX = Math.max(clickedLine.startX, Math.min(mouseX, clickedLine.endX));
+                const distPx = clampedX - clickedLine.startX;
+                const distMm = distPx * mmPerPixel;
+                selectedPoint = { x: clampedX, y: clickedLine.baseY + 15, mm: distMm };
+                render();
+            }
         }
     }
 
