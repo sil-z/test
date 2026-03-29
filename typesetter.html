@@ -921,11 +921,26 @@
                     svgOverlay.appendChild(g);
 
                 } else {
-                    // === Canvas 切片映射整体变形渲染逻辑（连字完美生效） ===
+                    // === Canvas 切片映射整体变形渲染逻辑（动态精准检测实际包围盒） ===
+                    
+                    // 获取当前字体的实际渲染物理边界（TextMetrics API）
+                    const metrics = ctx.measureText(line);
+                    
+                    // actualBoundingBoxLeft: 对齐点左侧的溢出距离（处理首字母向左的起笔花体）
+                    // actualBoundingBoxRight: 对齐点右侧的总跨度（处理连字和右侧甩尾）
+                    // 增加 2px 的 buffer 应对部分浏览器 Canvas 抗锯齿在边界上的亚像素溢出
+                    const buffer = 2; 
+                    const bleedLeft = (metrics.actualBoundingBoxLeft || (fontSize * 0.5)) + buffer;
+                    const bleedRight = (metrics.actualBoundingBoxRight || (totalWidthPx + fontSize * 0.5)) + buffer;
+                    
+                    const bleedLeft_px = Math.ceil(bleedLeft * dpr);
+                    const visualWidth_px = Math.ceil((bleedLeft + bleedRight) * dpr);
+
                     const offscreen = document.createElement('canvas');
-                    const W_px = Math.ceil((totalWidthPx + fontSize) * dpr);
                     const H_px = Math.ceil(fontSize * 2.5 * dpr);
-                    offscreen.width = Math.max(1, W_px);
+                    
+                    // 离屏画布的宽度设置为检测到的真实视觉总宽度
+                    offscreen.width = Math.max(1, visualWidth_px);
                     offscreen.height = Math.max(1, H_px);
                     const oCtx = offscreen.getContext('2d');
 
@@ -933,11 +948,11 @@
                     offscreen.style.fontVariantLigatures = "contextual"; 
                     oCtx.fillStyle = '#111827';
 
-                    // ---------------- 修复区域开始 ----------------
-                    // 计算一个安全的基线高度 (距离顶部 60% 的高度，确保有足够的空间容纳上升部和下降部)
                     const baseY = Math.ceil(H_px * 0.6); 
-                    oCtx.textBaseline = 'alphabetic'; // 对齐 SVG 的默认基线模式
-                    oCtx.fillText(line, 0, baseY);    // 在基线 baseY 处绘制纯净直线文本
+                    oCtx.textBaseline = 'alphabetic'; 
+                    
+                    // 【关键修复 1】: 将文本向右平移 bleedLeft_px，让出左侧的负坐标空间，防止左侧起笔被裁切
+                    oCtx.fillText(line, bleedLeft_px, baseY);
 
                     ctx.save();
                     // 在 DPR 空间绘制变形，直接清空主矩阵的缩放以避免双重 DPR
@@ -946,8 +961,13 @@
                     // 为保证弧外圈没有锯齿空隙，切片宽度动态计算 (外弧长/内弧长比例)
                     const stripW = Math.max(1.5, Math.ceil(2 * (sr + H_px / 2) / sr));
 
-                    for (let x = 0; x < Math.ceil(totalWidthPx * dpr); x += 1) {
-                        const x_arc_dpr = startX * dpr + x;
+                    // 【关键修复 2】: 遍历整个真实的视觉宽度像素
+                    for (let i = 0; i < visualWidth_px; i += 1) {
+                        
+                        // i 是离屏 Canvas 上的像素索引，需要减去 bleedLeft_px 才能还原到排版所需的正确物理映射位置
+                        const logical_offset_px = i - bleedLeft_px; 
+                        
+                        const x_arc_dpr = startX * dpr + logical_offset_px;
                         const theta = x_arc_dpr / sr;
 
                         let Bx, By, Tx, Ty, Nx, Ny;
@@ -967,10 +987,8 @@
                         ctx.setTransform(Tx, Ty, Nx, Ny, Bx, By);
                         
                         // 从离屏直线切出 1 px 数据，画在当前矩阵系下
-                        // 注意这里 Y 轴的起始偏移量改为 -baseY，保证映射后的基线精确落在 (Bx, By) 轨迹上
-                        ctx.drawImage(offscreen, x, 0, stripW, H_px, 0, -baseY, stripW, H_px);
+                        ctx.drawImage(offscreen, i, 0, stripW, H_px, 0, -baseY, stripW, H_px);
                     }
-                    // ---------------- 修复区域结束 ----------------
                     ctx.restore();
                 }
 
