@@ -84,11 +84,10 @@
             font-size: 11px; color: var(--text-muted);
             font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
             display: flex; justify-content: space-between; align-items: center;
-            height: 16px; 
-            line-height: 16px;
+            height: 16px; line-height: 16px;
         }
 
-        input[type="text"], input[type="number"], textarea {
+        input[type="text"], input[type="number"]:not(.control-num), textarea {
             width: 100%; font-size: 13px; padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
@@ -96,10 +95,8 @@
             transition: var(--transition); font-family: var(--font-stack); 
         }
         
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
-            outline: none; 
-            border-color: #a1a1aa; 
-            background-color: #fff;
+        input[type="text"]:focus, input[type="number"]:not(.control-num):focus, textarea:focus {
+            outline: none; border-color: #a1a1aa; background-color: #fff;
         }
         
         textarea { resize: vertical; min-height: 70px; line-height: 1.5; white-space: pre; }
@@ -139,11 +136,14 @@
         input[type="range"]:focus { outline: none; box-shadow: none; }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
-            background: var(--accent); cursor: pointer; margin-top: -5px;
+            background: var(--accent); cursor: pointer; margin-top: -5px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         input[type="range"]::-webkit-slider-runnable-track {
             width: 100%; height: 4px; cursor: pointer; background: var(--border-color); border-radius: 2px;
         }
+
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
 
         .file-upload-wrapper { display: flex; gap: 8px; }
         .file-upload-box { position: relative; flex-grow: 1; }
@@ -172,14 +172,72 @@
         .val-text { font-weight: 600; color: var(--accent); }
 
         .line-offset-container {
-            background: #fafafa; border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm); padding: 8px;
-            display: flex; flex-direction: column; gap: 8px;
-            max-height: 120px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 12px;
         }
-        .line-offset-item { display: flex; align-items: center; gap: 8px; }
-        .line-offset-item span.line-label { font-size: 11px; color: var(--text-muted); width: 20px; text-align: right; }
-        .line-offset-item span.val-label { font-size: 11px; color: var(--accent); width: 34px; text-align: right; font-variant-numeric: tabular-nums; }
+        
+        .line-group {
+            background: #ffffff; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            overflow: visible;
+        }
+        
+        .line-group-header {
+            background: #f9fafb; padding: 10px 12px; font-size: 11px;
+            font-weight: 600; color: var(--text-main);
+            border-top-left-radius: var(--radius-sm); border-top-right-radius: var(--radius-sm);
+        }
+
+        .line-title-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; cursor: pointer; user-select: none;
+        }
+
+        .expand-icon {
+            width: 14px; height: 14px; stroke: #6b7280; transition: transform 0.2s ease;
+        }
+        .expand-icon.open { transform: rotate(90deg); }
+
+        .segments-container {
+            display: none; flex-direction: column;
+            border-top: 1px solid var(--border-color);
+            background: #ffffff; border-bottom-left-radius: var(--radius-sm); border-bottom-right-radius: var(--radius-sm);
+        }
+        .segments-container.open { display: flex; }
+        
+        .segment-item {
+            padding: 10px 12px; border-bottom: 1px solid var(--border-color);
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .segment-item:last-child { border-bottom: none; }
+        
+        .line-label { font-size: 11px; font-weight: 600; color: var(--text-main); }
+        .seg-preview { 
+            font-size: 10px; color: var(--text-muted); font-family: monospace; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px;
+            background: #f3f4f6; padding: 2px 6px; border-radius: 4px;
+        }
+
+        .control-row { 
+            display: flex; flex-direction: column; gap: 4px; align-items: stretch; margin-bottom: 6px;
+        }
+        .control-label { font-size: 11px; color: var(--text-main); font-weight: normal; text-align: left; }
+        .control-slider-container { flex-grow: 1; display: flex; align-items: center; }
+
+        .num-input-wrapper {
+            display: flex; align-items: center; gap: 4px; width: 68px; justify-content: flex-end; flex-shrink: 0;
+        }
+        .num-input-group { 
+            display: flex; align-items: center; justify-content: center;
+            background: #f3f4f6; border-radius: 4px; padding: 0 2px; width: 44px; height: 22px;
+            border: 1px solid transparent; transition: border-color 0.2s ease;
+        }
+        .num-input-group:focus-within { border-color: #a1a1aa; background: #ffffff; }
+        .num-input-group input.control-num { 
+            border: none; background: transparent; width: 100%; height: 100%; 
+            padding: 0; font-size: 11px; text-align: center; color: var(--text-main); font-family: monospace; font-weight: 500;
+        }
+        .num-input-group input.control-num:focus { outline: none; border: none; }
+        .unit { font-size: 10px; color: var(--text-muted); width: 16px; text-align: left; user-select: none;}
 
         #scaleInfo {
             font-size: 11.5px; color: var(--text-muted); background: var(--bg-body); 
@@ -211,18 +269,15 @@
         }
         
         #scrollWrapper {
-            position: relative;
-            transform-origin: top left;
+            position: relative; transform-origin: top left;
         }
         
         canvas {
-            display: block; background-color: transparent; cursor: crosshair;
-            z-index: 1;
+            display: block; background-color: transparent; cursor: crosshair; z-index: 1;
         }
         
         #svgOverlay {
-            position: absolute; top: 0; left: 0; 
-            pointer-events: none; z-index: 2; overflow: visible;
+            position: absolute; top: 0; left: 0; pointer-events: none; z-index: 2; overflow: visible;
         }
 
         .is-panning canvas { cursor: grabbing !important; }
@@ -236,6 +291,17 @@
             display: flex; flex-direction: column; gap: 12px; margin-top: 8px; padding: 12px;
             background: #fafafa; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
         }
+        
+        .reset-line-btn {
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-muted); font-size: 11px; height: 24px; padding: 0 6px;
+            box-shadow: none; display: flex; align-items: center; gap: 4px;
+            transition: all 0.2s ease; border-radius: 4px;
+        }
+        .reset-line-btn:hover { 
+            background: #f3f4f6; color: var(--text-main); border-color: var(--border-color); 
+        }
+        .reset-line-btn svg { width: 12px; height: 12px; opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -261,7 +327,7 @@
 
             <div class="property-group">
                 <span class="property-title" data-i18n="section_text">Content & Layout</span>
-                <textarea id="textInput">Oh you look so beautiful tonight&#10;In the city of blinding lights</textarea>
+                <textarea id="textInput" placeholder="" title="Use \ for inline segmenting, \\ for a literal slash"></textarea>
                 
                 <div class="grid-row" style="margin-top: 4px;">
                     <div>
@@ -291,9 +357,9 @@
                 </div>
 
                 <div>
-                    <label class="block-label" data-i18n="label_offsets">Line Offsets</label>
+                    <label class="block-label" data-i18n="label_offsets">Phrasing & Offsets</label>
                     <div class="line-offset-container" id="offsetContainer"></div>
-                    <button class="btn" id="resetOffsetsBtn" style="width:100%; margin-top: 8px;" data-i18n="btn_reset">Reset</button>
+                    <button class="btn" id="resetOffsetsBtn" style="width:100%; margin-top: 8px;" data-i18n="btn_reset">Reset All</button>
                 </div>
             </div>
             
@@ -359,6 +425,14 @@
                         </div>
                         <input type="hidden" id="circleMode" value="vector">
                     </div>
+                    
+                    <div class="toggle-row" id="anglesMeasureRow" style="margin-top: 4px;">
+                        <span class="toggle-label" data-i18n="overlay_angles">Angles (Circ.)</span>
+                        <label class="switch">
+                            <input type="checkbox" id="showAngles">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
 
                 </div>
             </div>
@@ -371,9 +445,13 @@
                         <input type="text" id="calibChar" value="n" maxlength="1">
                     </div>
                     <div>
-                        <label class="block-label" data-i18n="label_width">Actual Width (mm)</label>
+                        <label class="block-label" data-i18n="label_width">Glyph W (mm)</label>
                         <input type="number" id="calibMm" value="5" step="0.1">
                     </div>
+                </div>
+                <div style="margin-top: 8px;">
+                    <label class="block-label" data-i18n="label_lh_calib">1x Line Height (mm)</label>
+                    <input type="number" id="calibLhMm" value="" step="0.1">
                 </div>
                 <div id="scaleInfo" data-i18n="status_waiting">Font not loaded...</div>
             </div>
@@ -394,6 +472,20 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                <div class="toggle-row" id="vOffsMeasureRow">
+                    <span class="toggle-label" data-i18n="overlay_voffs">V-Offsets</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showVOffs" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-row" id="lineLeftsMeasureRow">
+                    <span class="toggle-label" data-i18n="overlay_line_lefts">Left Margins</span>
+                    <label class="switch">
+                        <input type="checkbox" id="showLineLefts" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 <div class="toggle-row">
                     <span class="toggle-label" data-i18n="overlay_space">By Word</span>
                     <label class="switch">
@@ -401,10 +493,10 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div class="toggle-row" id="radiusMeasureRow" style="display: none;">
-                    <span class="toggle-label" data-i18n="overlay_radius">Radius</span>
+                <div class="toggle-row" id="spacingMeasureRow">
+                    <span class="toggle-label" data-i18n="overlay_spacing">Spacing</span>
                     <label class="switch">
-                        <input type="checkbox" id="showRadius" checked>
+                        <input type="checkbox" id="showSpacing" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -430,30 +522,40 @@
         en: {
             title: "Penman's Typesetter", section_font: "Font Source", upload_btn: "Upload File...", preset_btn: "Default",
             section_text: "Content & Layout", label_size: "Zoom: ", label_lh: "Line H: ", label_align: "Alignment",
-            align_left: "Left", align_center: "Center", align_right: "Right", label_offsets: "Line Offsets", btn_reset: "Reset",
+            align_left: "Left", align_center: "Center", align_right: "Right", label_offsets: "Phrasing & Settings", btn_reset: "Reset All Settings",
+            btn_reset_line: "Reset Line",
             section_circle: "Circular Layout", enable_circle: "Enable Circular", circle_radius: "Base Radius: ", 
             circle_dir: "Direction", dir_in: "Outside-In", dir_out: "Inside-Out", 
             circle_bend: "Bend Direction", bend_down: "Forward", bend_up: "Backward",
             circle_mode: "Rendering Mode", mode_vector: "Vector Warp", mode_raster: "Raster Warp",
-            section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Actual Width (mm)",
+            section_calib: "Calibration", label_glyph: "Ref. Glyph", label_width: "Glyph Width (mm)", label_lh_calib: "1x Line Height (mm)",
             status_waiting: "Font not loaded...", status_fetching: "Fetching default...", status_parsing: "Parsing font data...",
-            status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Warning: Metric unavailable",
-            section_overlay: "Measure", overlay_lines: "Guidelines", overlay_center: "Midpoint", overlay_space: "By Word", 
-            overlay_radius: "Radius", btn_export: "Export to PNG", btn_website: "Personal Website"
+            status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Metric unavailable",
+            section_overlay: "Measure", overlay_lines: "Baselines", overlay_center: "Midpoint", overlay_space: "By Word", 
+            overlay_spacing: "Line Spacing", overlay_voffs: "Vertical Offsets", overlay_line_lefts: "Left Margins", overlay_angles: "Enable Angle Measurement",
+            btn_export: "Export to PNG", btn_website: "Personal Website",
+            seg_label: "S", seg_empty: "(empty)",
+            ctrl_hoff: "Horizontal Offset", ctrl_voff: "Vertical Offset", ctrl_sc: "Scale", ctrl_roff: "Whole-line Offset", ctrl_dlh: "Extra Line Spacing",
+            line_label: "L", title_hoff: "Horizontal Offset", title_voff: "Vertical Offset", title_sc: "Scale", title_roff: "Whole-line Offset", title_dlh: "Extra Line Spacing"
         },
         zh: {
             title: "书法字体排版器", section_font: "字体源", upload_btn: "上传文件...", preset_btn: "加载默认",
             section_text: "内容与排版", label_size: "缩放：", label_lh: "行距：", label_align: "对齐方式",
-            align_left: "左对齐", align_center: "居中", align_right: "右对齐", label_offsets: "逐行偏移", btn_reset: "重置偏移",
-            section_circle: "圆弧排版", enable_circle: "启用圆弧排版", circle_radius: "基础半径：", 
+            align_left: "左对齐", align_center: "居中", align_right: "右对齐", label_offsets: "逐行设置", btn_reset: "重置所有",
+            btn_reset_line: "重置",
+            section_circle: "环形排版", enable_circle: "启用环形排版", circle_radius: "基础半径：", 
             circle_dir: "排版方向", dir_in: "由外向内", dir_out: "由内向外", 
             circle_bend: "变形方向", bend_down: "正向", bend_up: "反向",
             circle_mode: "渲染模式", mode_vector: "矢量形变", mode_raster: "位图形变",
-            section_calib: "校准", label_glyph: "基准字形", label_width: "实际尺寸 (mm)",
+            section_calib: "校准", label_glyph: "基准字形", label_width: "字形宽（mm）", label_lh_calib: "单倍行距（mm）",
             status_waiting: "字体未导入...", status_fetching: "下载默认字体...", status_parsing: "解析字体数据...",
-            status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "警告：无法读取",
-            section_overlay: "测量", overlay_lines: "辅助线", overlay_center: "中点", overlay_space: "逐词", 
-            overlay_radius: "半径", btn_export: "导出为 PNG", btn_website: "个人主页"
+            status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "无法读取",
+            section_overlay: "测量", overlay_lines: "基线", overlay_center: "中轴线", overlay_space: "逐词间距", 
+            overlay_spacing: "行间距", overlay_voffs: "垂直偏移", overlay_line_lefts: "左侧边距", overlay_angles: "启用角度测量",
+            btn_export: "导出为 PNG", btn_website: "个人主页",
+            seg_label: "S", seg_empty: "（空）",
+            ctrl_hoff: "水平偏移", ctrl_voff: "垂直偏移", ctrl_sc: "缩放", ctrl_roff: "整行偏移", ctrl_dlh: "额外行距",
+            line_label: "L", title_hoff: "水平偏移", title_voff: "垂直偏移", title_sc: "缩放", title_roff: "整行偏移", title_dlh: "额外行距"
         }
     };
 
@@ -463,9 +565,16 @@
     let fontFileName = "";
     let isFontLoaded = false;
     let mmPerPixel = 0.1; 
-    let selectedPoint = null; // 现将存储 {lineIndex, distMm, isCustom}，保证按比例和行数独立
-    let lineData = [];
+    let selectedPoint = null; 
+    let lineData = []; 
+    
+    let previousSegmentsStrings = [];
     let customOffsets = []; 
+    let customScales = []; 
+    let customVOffsets = [];
+    let customLineHeights = []; 
+    let customLineOffsets = []; 
+    let expandedLines = new Set(); 
     let fontBase64 = ""; 
 
     const canvasContainer = document.getElementById('canvasContainer');
@@ -477,6 +586,7 @@
     const textInput = document.getElementById('textInput');
     const calibCharInput = document.getElementById('calibChar');
     const calibMmInput = document.getElementById('calibMm');
+    const calibLhMmInput = document.getElementById('calibLhMm');
     const scaleInfo = document.getElementById('scaleInfo');
     const uploadLabel = document.getElementById('uploadLabel');
     const sizeSlider = document.getElementById('sizeSlider');
@@ -486,8 +596,11 @@
     
     const showLines = document.getElementById('showLines');
     const showCenters = document.getElementById('showCenters');
+    const showAngles = document.getElementById('showAngles');
+    const showVOffs = document.getElementById('showVOffs');
+    const showLineLefts = document.getElementById('showLineLefts');
     const showSpaces = document.getElementById('showSpaces');
-    const showRadius = document.getElementById('showRadius');
+    const showSpacing = document.getElementById('showSpacing');
 
     const useCircle = document.getElementById('useCircle');
     const circleSettings = document.getElementById('circleSettings');
@@ -496,7 +609,20 @@
     const circleBend = document.getElementById('circleBend');
     const circleMode = document.getElementById('circleMode'); 
 
-    // 通用自定义选择器逻辑绑定
+    function getParsedLines() {
+        const raw = textInput.value.replace(/\r\n/g, '\n');
+        const visualLines = raw.split('\n');
+        let segmentIndex = 0;
+        
+        return visualLines.map(lineText => {
+            const tempStr = lineText.replace(/\\\\/g, '\uE000');
+            const parts = tempStr.split('\\');
+            return parts.map(part => {
+                return { text: part.replace(/\uE000/g, '\\'), index: segmentIndex++ };
+            });
+        });
+    }
+
     document.querySelectorAll('.custom-select-container').forEach(container => {
         const trigger = container.querySelector('.custom-select-trigger');
         const optionsPanel = container.querySelector('.custom-options');
@@ -561,16 +687,19 @@
     function saveSettings() {
         const state = {
             text: textInput.value, size: sizeSlider.value, lh: lhSlider.value, align: alignSelectInput.value,
-            offsets: customOffsets, calibChar: calibCharInput.value, calibMm: calibMmInput.value,
-            showLines: showLines.checked, showCenters: showCenters.checked, showSpaces: showSpaces.checked, showRadius: showRadius.checked,
+            offsets: customOffsets, scales: customScales, vOffsets: customVOffsets,
+            lineHeights: customLineHeights, lineOffsets: customLineOffsets,
+            calibChar: calibCharInput.value, calibMm: calibMmInput.value, calibLhMm: calibLhMmInput.value,
+            showLines: showLines.checked, showCenters: showCenters.checked, showSpaces: showSpaces.checked, showSpacing: showSpacing.checked,
+            showVOffs: showVOffs.checked, showLineLefts: showLineLefts.checked, showAngles: showAngles.checked,
             useCircle: useCircle.checked, circleRadius: radiusSlider.value, circleDir: circleDir.value, circleBend: circleBend.value, 
             circleMode: circleMode.value, lang: currentLang 
         };
-        localStorage.setItem('penmanSettings', JSON.stringify(state));
+        localStorage.setItem('penmanSettings_v17', JSON.stringify(state));
     }
 
     function loadSettings() {
-        const saved = localStorage.getItem('penmanSettings');
+        const saved = localStorage.getItem('penmanSettings_v17');
         if (saved) {
             try {
                 const state = JSON.parse(saved);
@@ -579,16 +708,24 @@
                 if (state.lh !== undefined) { lhSlider.value = state.lh; document.getElementById('lhVal').textContent = state.lh; }
                 if (state.align !== undefined) setCustomSelectValue('alignSelect', state.align);
                 if (state.offsets !== undefined) customOffsets = state.offsets;
+                if (state.scales !== undefined) customScales = state.scales;
+                if (state.vOffsets !== undefined) customVOffsets = state.vOffsets;
+                if (state.lineHeights !== undefined) customLineHeights = state.lineHeights;
+                if (state.lineOffsets !== undefined) customLineOffsets = state.lineOffsets;
                 if (state.calibChar !== undefined) calibCharInput.value = state.calibChar;
                 if (state.calibMm !== undefined) calibMmInput.value = state.calibMm;
+                if (state.calibLhMm !== undefined) calibLhMmInput.value = state.calibLhMm;
                 if (state.showLines !== undefined) showLines.checked = state.showLines;
                 if (state.showCenters !== undefined) showCenters.checked = state.showCenters;
                 if (state.showSpaces !== undefined) showSpaces.checked = state.showSpaces;
-                if (state.showRadius !== undefined) showRadius.checked = state.showRadius;
+                if (state.showSpacing !== undefined) showSpacing.checked = state.showSpacing;
+                if (state.showVOffs !== undefined) showVOffs.checked = state.showVOffs;
+                if (state.showLineLefts !== undefined) showLineLefts.checked = state.showLineLefts;
+                if (state.showAngles !== undefined) showAngles.checked = state.showAngles;
                 if (state.useCircle !== undefined) {
                     useCircle.checked = state.useCircle;
                     circleSettings.style.display = state.useCircle ? 'flex' : 'none';
-                    document.getElementById('radiusMeasureRow').style.display = state.useCircle ? 'flex' : 'none';
+                    document.getElementById('lineLeftsMeasureRow').style.display = state.useCircle ? 'none' : 'flex';
                 }
                 if (state.circleRadius !== undefined) { radiusSlider.value = state.circleRadius; document.getElementById('radiusVal').textContent = state.circleRadius; }
                 if (state.circleDir !== undefined) setCustomSelectValue('circleDir', state.circleDir);
@@ -596,7 +733,12 @@
                 if (state.circleMode !== undefined) setCustomSelectValue('circleMode', state.circleMode);
                 if (state.lang !== undefined) currentLang = state.lang;
             } catch(e) {}
+        } else {
+            if(textInput.value === "") {
+                textInput.value = "Oh you look so beautiful tonight\nIn the city\\ of blinding lights";
+            }
         }
+        previousSegmentsStrings = getParsedLines().flat().map(s => s.text);
     }
 
     function updateLanguage() {
@@ -623,6 +765,8 @@
         });
 
         if (currentOpentypeFont && fontFileName) document.getElementById('uploadLabel').textContent = fontFileName;
+        
+        updateSegmentsUI();
         updateScaleAndRender();
     }
     
@@ -631,17 +775,24 @@
     document.getElementById('fontInput').addEventListener('change', handleFontUpload);
     document.getElementById('presetBtn').addEventListener('click', loadPresetFont);
     document.getElementById('exportBtn').addEventListener('click', exportPNG);
-    document.getElementById('resetOffsetsBtn').addEventListener('click', () => { customOffsets = []; updateOffsetsUI(); render(); });
+    document.getElementById('resetOffsetsBtn').addEventListener('click', () => { 
+        customOffsets = []; customScales = []; customVOffsets = []; customLineHeights = []; customLineOffsets = []; 
+        updateSegmentsUI(); render(); 
+    });
     
     showLines.addEventListener('change', render); showCenters.addEventListener('change', render);
-    showSpaces.addEventListener('change', render); showRadius.addEventListener('change', render);
-    calibCharInput.addEventListener('input', updateScaleAndRender); calibMmInput.addEventListener('input', updateScaleAndRender);
+    showVOffs.addEventListener('change', render); showLineLefts.addEventListener('change', render);
+    showSpaces.addEventListener('change', render); showSpacing.addEventListener('change', render);
+    showAngles.addEventListener('change', render);
+    calibCharInput.addEventListener('input', () => updateScaleAndRender('char')); 
+    calibMmInput.addEventListener('input', () => updateScaleAndRender('char'));
+    calibLhMmInput.addEventListener('input', () => updateScaleAndRender('lh'));
 
     useCircle.addEventListener('change', (e) => {
         const isCircle = e.target.checked;
         circleSettings.style.display = isCircle ? 'flex' : 'none';
-        document.getElementById('radiusMeasureRow').style.display = isCircle ? 'flex' : 'none';
-        updateOffsetsUI(); render();
+        document.getElementById('lineLeftsMeasureRow').style.display = isCircle ? 'none' : 'flex';
+        updateSegmentsUI(); render();
     });
     
     radiusSlider.addEventListener('input', (e) => { document.getElementById('radiusVal').textContent = e.target.value; render(); });
@@ -678,7 +829,7 @@
 
         if (newSize !== oldSize) {
             sizeSlider.value = newSize; document.getElementById('sizeVal').textContent = newSize;
-            updateScaleAndRender();
+            updateScaleAndRender('size');
             requestAnimationFrame(() => {
                 const scaleRatio = newSize / oldSize;
                 canvasContainer.scrollLeft = canvasMouseX * scaleRatio - mouseX;
@@ -687,33 +838,402 @@
         }
     }, { passive: false });
 
-    // 重新输入时再清空自定义测量点
-    textInput.addEventListener('input', () => { selectedPoint = null; updateOffsetsUI(); render(); });
-    sizeSlider.addEventListener('input', (e) => { document.getElementById('sizeVal').textContent = e.target.value; updateScaleAndRender(); });
+    textInput.addEventListener('input', () => { 
+        selectedPoint = null; 
+        const newSegs = getParsedLines().flat().map(s => s.text);
+        const oldSegs = previousSegmentsStrings;
+
+        let prefix = 0;
+        while(prefix < oldSegs.length && prefix < newSegs.length && oldSegs[prefix] === newSegs[prefix]) prefix++;
+        
+        let suffix = 0;
+        while(suffix < oldSegs.length - prefix && suffix < newSegs.length - prefix && oldSegs[oldSegs.length - 1 - suffix] === newSegs[newSegs.length - 1 - suffix]) suffix++;
+
+        let removedCount = oldSegs.length - prefix - suffix;
+        let addedCount = newSegs.length - prefix - suffix;
+
+        if (removedCount !== addedCount || addedCount > 0) {
+            let insertOffsets = [];
+            let insertScales = [];
+            let insertVOffsets = [];
+            for(let i = 0; i < addedCount; i++) {
+                if (i < removedCount) {
+                    insertOffsets.push(customOffsets[prefix + i] || 0);
+                    insertScales.push(customScales[prefix + i] || 1.0);
+                    insertVOffsets.push(customVOffsets[prefix + i] || 0);
+                } else {
+                    insertOffsets.push(0);
+                    insertScales.push(1.0);
+                    insertVOffsets.push(0);
+                }
+            }
+            customOffsets.splice(prefix, removedCount, ...insertOffsets);
+            customScales.splice(prefix, removedCount, ...insertScales);
+            customVOffsets.splice(prefix, removedCount, ...insertVOffsets);
+        }
+
+        previousSegmentsStrings = newSegs;
+        updateSegmentsUI(); 
+        render(); 
+    });
+
+    sizeSlider.addEventListener('input', (e) => { document.getElementById('sizeVal').textContent = e.target.value; updateScaleAndRender('size'); });
     lhSlider.addEventListener('input', (e) => { document.getElementById('lhVal').textContent = e.target.value; render(); });
 
     const resizeObserver = new ResizeObserver(() => { render(); });
     resizeObserver.observe(canvasContainer);
 
-    function updateOffsetsUI() {
-        const lines = textInput.value.split('\n');
-        while(customOffsets.length < lines.length) customOffsets.push(0);
-        while(customOffsets.length > lines.length) customOffsets.pop();
+    function updateSegmentsUI() {
+        const visualLines = getParsedLines();
+        const t = i18nDict[currentLang];
+        let totalSegments = 0;
+        visualLines.forEach(vl => totalSegments += vl.length);
+
+        while(customOffsets.length < totalSegments) customOffsets.push(0);
+        while(customOffsets.length > totalSegments) customOffsets.pop();
+        while(customScales.length < totalSegments) customScales.push(1.0);
+        while(customScales.length > totalSegments) customScales.pop();
+        while(customVOffsets.length < totalSegments) customVOffsets.push(0);
+        while(customVOffsets.length > totalSegments) customVOffsets.pop();
+        
+        while(customLineHeights.length < visualLines.length) customLineHeights.push(0);
+        while(customLineHeights.length > visualLines.length) customLineHeights.pop();
+        while(customLineOffsets.length < visualLines.length) customLineOffsets.push(0);
+        while(customLineOffsets.length > visualLines.length) customLineOffsets.pop();
 
         const isCircle = useCircle.checked;
-        const minVal = isCircle ? -180 : -100; const maxVal = isCircle ? 180 : 100; const unit = isCircle ? '°' : '%';
+        const baseFontSize = parseInt(sizeSlider.value);
+        ctx.font = `${baseFontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+
+        const resetLineText = t.btn_reset_line;
 
         offsetContainer.innerHTML = '';
-        lines.forEach((line, i) => {
-            if (customOffsets[i] < minVal) customOffsets[i] = minVal; if (customOffsets[i] > maxVal) customOffsets[i] = maxVal;
-            const item = document.createElement('div'); item.className = 'line-offset-item';
-            item.innerHTML = `<span class="line-label">L${i+1}</span><input type="range" min="${minVal}" max="${maxVal}" value="${customOffsets[i]}" data-idx="${i}"><span class="val-label">${customOffsets[i]}${unit}</span>`;
+        let sIdx = 0;
+        
+        visualLines.forEach((vl, lIdx) => {
+            if (vl.length === 0) return;
             
-            const slider = item.querySelector('input'); const valLabel = item.querySelector('.val-label');
-            slider.addEventListener('input', (e) => {
-                customOffsets[i] = parseInt(e.target.value); valLabel.textContent = customOffsets[i] + unit; render();
+            const lineGroup = document.createElement('div');
+            lineGroup.className = 'line-group';
+            
+            const isExpanded = expandedLines.has(lIdx);
+
+            const lineHeader = document.createElement('div');
+            lineHeader.className = 'line-group-header';
+            lineHeader.innerHTML = `
+                <div class="line-title-row" data-line-idx="${lIdx}">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <svg class="expand-icon ${isExpanded ? 'open' : ''}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <span style="font-size:12px;">${t.line_label}${lIdx + 1}</span>
+                    </div>
+                    <button class="btn reset-line-btn" data-line="${lIdx}" title="${resetLineText}">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        ${resetLineText}
+                    </button>
+                </div>
+                <div class="line-controls" style="margin-top: 10px;">
+                    <div class="control-row">
+                        <span class="control-label" title="${t.title_roff}">${t.ctrl_roff}</span>
+                        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                            <div class="control-slider-container">
+                                <input type="range" class="line-off-slider" min="${isCircle ? -180 : -100}" max="${isCircle ? 180 : 100}" step="0.1" value="${(customLineOffsets[lIdx] || 0).toFixed(1)}">
+                            </div>
+                            <div class="num-input-wrapper">
+                                <div class="num-input-group">
+                                    <input type="number" class="control-num line-off-num" step="0.1" value="${(customLineOffsets[lIdx] || 0).toFixed(1)}">
+                                </div>
+                                <span class="unit line-off-unit">${isCircle ? '°' : 'mm'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label" title="${t.title_dlh}">${t.ctrl_dlh}</span>
+                        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                            <div class="control-slider-container">
+                                <input type="range" class="line-lh-slider" min="-2.0" max="5.0" step="0.1" value="${(customLineHeights[lIdx] || 0).toFixed(1)}">
+                            </div>
+                            <div class="num-input-wrapper">
+                                <div class="num-input-group">
+                                    <input type="number" class="control-num line-lh-num" step="0.1" value="${(customLineHeights[lIdx] || 0).toFixed(1)}">
+                                </div>
+                                <span class="unit">x</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const titleRow = lineHeader.querySelector('.line-title-row');
+            titleRow.addEventListener('click', (e) => {
+                if(e.target.closest('.reset-line-btn')) return;
+                const container = lineGroup.querySelector('.segments-container');
+                const icon = lineHeader.querySelector('.expand-icon');
+                if (expandedLines.has(lIdx)) {
+                    expandedLines.delete(lIdx);
+                    container.classList.remove('open');
+                    icon.classList.remove('open');
+                } else {
+                    expandedLines.add(lIdx);
+                    container.classList.add('open');
+                    icon.classList.add('open');
+                }
             });
-            offsetContainer.appendChild(item);
+            
+            const resetBtn = lineHeader.querySelector('.reset-line-btn');
+            resetBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                customLineOffsets[lIdx] = 0;
+                customLineHeights[lIdx] = 0;
+                let sStart = 0;
+                for (let i = 0; i < lIdx; i++) sStart += visualLines[i].length;
+                for (let i = 0; i < visualLines[lIdx].length; i++) {
+                    customOffsets[sStart + i] = 0;
+                    customScales[sStart + i] = 1.0;
+                    customVOffsets[sStart + i] = 0;
+                }
+                updateSegmentsUI();
+                render();
+            });
+
+            const lOffSlider = lineHeader.querySelector('.line-off-slider');
+            const lOffNum = lineHeader.querySelector('.line-off-num');
+            lOffSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                lOffNum.value = val.toFixed(1);
+                customLineOffsets[lIdx] = val;
+                render();
+            });
+            lOffNum.addEventListener('change', (e) => {
+                let val = parseFloat(e.target.value);
+                if(isNaN(val)) val = 0;
+                let currentMin = parseFloat(lOffSlider.min);
+                let currentMax = parseFloat(lOffSlider.max);
+                if(val < currentMin) val = currentMin;
+                if(val > currentMax) val = currentMax;
+                lOffSlider.value = val;
+                lOffNum.value = val.toFixed(1);
+                customLineOffsets[lIdx] = val;
+                render();
+            });
+
+            const lLhSlider = lineHeader.querySelector('.line-lh-slider');
+            const lLhNum = lineHeader.querySelector('.line-lh-num');
+            lLhSlider.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                lLhNum.value = val.toFixed(1);
+                customLineHeights[lIdx] = val;
+                render();
+            });
+            lLhNum.addEventListener('change', (e) => {
+                let val = parseFloat(e.target.value);
+                if(isNaN(val)) val = 0;
+                lLhSlider.value = val;
+                lLhNum.value = val.toFixed(1);
+                customLineHeights[lIdx] = val;
+                render();
+            });
+
+            lineGroup.appendChild(lineHeader);
+
+            const segmentsContainer = document.createElement('div');
+            segmentsContainer.className = `segments-container ${isExpanded ? 'open' : ''}`;
+
+            vl.forEach((seg, iInL) => {
+                const scVal = customScales[sIdx].toFixed(2);
+                const offVal = customOffsets[sIdx].toFixed(1);
+                const vOffVal = customVOffsets[sIdx].toFixed(1);
+
+                const item = document.createElement('div');
+                item.className = 'segment-item';
+
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="line-label">${t.seg_label}${iInL + 1}</span>
+                        ${seg.text ? `<span class="seg-preview">${seg.text}</span>` : `<span class="seg-preview" style="opacity:0.5;">${t.seg_empty}</span>`}
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label" title="${t.title_hoff}">${t.ctrl_hoff}</span>
+                        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                            <div class="control-slider-container">
+                                <input type="range" class="off-slider" min="0" max="0" step="0.1" value="${offVal}">
+                            </div>
+                            <div class="num-input-wrapper">
+                                <div class="num-input-group">
+                                    <input type="number" class="control-num off-num" step="0.1" value="${offVal}">
+                                </div>
+                                <span class="unit off-unit"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label" title="${t.title_voff}">${t.ctrl_voff}</span>
+                        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                            <div class="control-slider-container">
+                                <input type="range" class="voff-slider" min="-50" max="50" step="0.1" value="${vOffVal}">
+                            </div>
+                            <div class="num-input-wrapper">
+                                <div class="num-input-group">
+                                    <input type="number" class="control-num voff-num" step="0.1" value="${vOffVal}">
+                                </div>
+                                <span class="unit">mm</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label" title="${t.title_sc}">${t.ctrl_sc}</span>
+                        <div style="display:flex; gap:6px; align-items:center; width:100%;">
+                            <div class="control-slider-container">
+                                <input type="range" class="sc-slider" min="0.1" max="10.0" step="0.01" value="${scVal}">
+                            </div>
+                            <div class="num-input-wrapper">
+                                <div class="num-input-group">
+                                    <input type="number" class="control-num sc-num" step="0.01" min="0.1" max="10.0" value="${scVal}">
+                                </div>
+                                <span class="unit">x</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                const offSlider = item.querySelector('.off-slider');
+                const offNum = item.querySelector('.off-num');
+                const vOffSlider = item.querySelector('.voff-slider');
+                const vOffNum = item.querySelector('.voff-num');
+                const scSlider = item.querySelector('.sc-slider');
+                const scNum = item.querySelector('.sc-num');
+
+                const localSIdx = sIdx;
+                
+                offSlider.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    offNum.value = val.toFixed(1);
+                    customOffsets[localSIdx] = val;
+                    render();
+                });
+                offNum.addEventListener('change', (e) => {
+                    let val = parseFloat(e.target.value);
+                    if(isNaN(val)) val = 0;
+                    let currentMin = parseFloat(offSlider.min);
+                    let currentMax = parseFloat(offSlider.max);
+                    if(val < currentMin) val = currentMin;
+                    if(val > currentMax) val = currentMax;
+                    offSlider.value = val;
+                    offNum.value = val.toFixed(1);
+                    customOffsets[localSIdx] = val;
+                    render();
+                });
+
+                vOffSlider.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    vOffNum.value = val.toFixed(1);
+                    customVOffsets[localSIdx] = val;
+                    render();
+                });
+                vOffNum.addEventListener('change', (e) => {
+                    let val = parseFloat(e.target.value);
+                    if(isNaN(val)) val = 0;
+                    if(val < -50) val = -50;
+                    if(val > 50) val = 50;
+                    vOffSlider.value = val;
+                    vOffNum.value = val.toFixed(1);
+                    customVOffsets[localSIdx] = val;
+                    render();
+                });
+
+                scSlider.addEventListener('input', (e) => {
+                    const s = parseFloat(e.target.value);
+                    scNum.value = s.toFixed(2);
+                    customScales[localSIdx] = s;
+                    render();
+                });
+                scNum.addEventListener('change', (e) => {
+                    let s = parseFloat(e.target.value);
+                    if(isNaN(s) || s < 0.1) s = 0.1;
+                    if(s > 10.0) s = 10.0;
+                    scSlider.value = s;
+                    scNum.value = s.toFixed(2);
+                    customScales[localSIdx] = s;
+                    render();
+                });
+
+                segmentsContainer.appendChild(item);
+                sIdx++;
+            });
+            lineGroup.appendChild(segmentsContainer);
+            offsetContainer.appendChild(lineGroup);
+        });
+        updateSlidersLimits(); 
+    }
+
+    function updateSlidersLimits() {
+        const isCircle = useCircle.checked;
+        const baseFontSize = parseInt(sizeSlider.value);
+        ctx.font = `${baseFontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+
+        const visualLines = getParsedLines();
+        const lineGroups = offsetContainer.querySelectorAll('.line-group');
+        if (lineGroups.length === 0) return;
+
+        let sIdx = 0;
+        let groupIdx = 0;
+
+        visualLines.forEach((vl) => {
+            if (vl.length === 0) return;
+
+            let currentStr = "";
+            let segMetrics = [];
+            vl.forEach(seg => {
+                let oldW = ctx.measureText(currentStr).width;
+                currentStr += seg.text;
+                let newW = ctx.measureText(currentStr).width;
+                segMetrics.push({ w: newW - oldW, logicalX: oldW });
+            });
+            let lineLogicalWidth = ctx.measureText(currentStr).width;
+
+            const lineGroupHeader = lineGroups[groupIdx].querySelector('.line-group-header');
+            if (lineGroupHeader) {
+                const lOffSlider = lineGroupHeader.querySelector('.line-off-slider');
+                const lOffUnit = lineGroupHeader.querySelector('.line-off-unit');
+                if (lOffSlider && lOffUnit) {
+                    if (isCircle) {
+                        lOffSlider.min = -180; lOffSlider.max = 180;
+                        lOffUnit.textContent = '°';
+                    } else {
+                        let maxMm = lineLogicalWidth * mmPerPixel;
+                        lOffSlider.min = -Math.ceil(maxMm);
+                        lOffSlider.max = Math.ceil(maxMm);
+                        lOffUnit.textContent = 'mm';
+                    }
+                }
+            }
+
+            const segmentItems = lineGroups[groupIdx].querySelectorAll('.segment-item');
+            vl.forEach((seg, iInL) => {
+                let minVal, maxVal, unit;
+                if (isCircle) {
+                    minVal = -180; maxVal = 180; unit = '°';
+                } else {
+                    let minPx = -(segMetrics[iInL].logicalX + segMetrics[iInL].w);
+                    let maxPx = lineLogicalWidth - segMetrics[iInL].logicalX;
+                    minVal = Math.floor(minPx * mmPerPixel) - 5;
+                    maxVal = Math.ceil(maxPx * mmPerPixel) + 5;
+                    unit = 'mm';
+                }
+
+                if (segmentItems[iInL]) {
+                    const slider = segmentItems[iInL].querySelector('.off-slider');
+                    const unitSpan = segmentItems[iInL].querySelector('.off-unit');
+                    if (slider) {
+                        slider.min = minVal;
+                        slider.max = maxVal;
+                    }
+                    if (unitSpan) {
+                        unitSpan.textContent = unit;
+                    }
+                }
+                sIdx++;
+            });
+            groupIdx++;
         });
     }
 
@@ -737,7 +1257,6 @@
         scaleInfo.textContent = i18nDict[currentLang].status_parsing;
         try {
             currentOpentypeFont = opentype.parse(arrayBuffer);
-            
             const bytes = new Uint8Array(arrayBuffer);
             let binary = '';
             for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
@@ -746,7 +1265,7 @@
             const fontFace = new FontFace('CustomRenderFont', arrayBuffer);
             await fontFace.load(); document.fonts.add(fontFace);
             isFontLoaded = true; scaleInfo.style.color = "var(--text-main)";
-            updateScaleAndRender();
+            updateScaleAndRender('font');
         } catch (err) { scaleInfo.textContent = i18nDict[currentLang].status_error; scaleInfo.style.color = "#ef4444"; }
     }
 
@@ -756,23 +1275,38 @@
         } else { return { x: cx + r * Math.sin(theta), y: cy + r * Math.cos(theta) }; }
     }
 
-    function updateScaleAndRender() {
+    function updateScaleAndRender(source = 'default') {
         const currentFontSize = parseInt(sizeSlider.value); const t = i18nDict[currentLang];
         if (!currentOpentypeFont) { mmPerPixel = 10 / currentFontSize; render(); return; }
         
-        const char = calibCharInput.value; const mm = parseFloat(calibMmInput.value);
-        if (char && !isNaN(mm) && mm > 0) {
-            const glyph = currentOpentypeFont.charToGlyph(char);
-            if (glyph && glyph.advanceWidth > 0) {
-                const mmPerFontUnit = mm / glyph.advanceWidth;
-                const pixelsPerFontUnit = currentFontSize / currentOpentypeFont.unitsPerEm;
-                mmPerPixel = mmPerFontUnit / pixelsPerFontUnit;
+        if (source === 'lh') {
+            const lhMm = parseFloat(calibLhMmInput.value);
+            if (!isNaN(lhMm) && lhMm > 0) {
+                mmPerPixel = lhMm / currentFontSize;
+                const glyph = currentOpentypeFont.charToGlyph(calibCharInput.value);
+                if (glyph && glyph.advanceWidth > 0) {
+                    const pixelsPerFontUnit = currentFontSize / currentOpentypeFont.unitsPerEm;
+                    const glyphPx = glyph.advanceWidth * pixelsPerFontUnit;
+                    calibMmInput.value = (glyphPx * mmPerPixel).toFixed(2);
+                }
                 scaleInfo.textContent = t.scale_format.replace('{val}', mmPerPixel.toFixed(4));
                 scaleInfo.style.color = "var(--text-main)";
-            } else { scaleInfo.textContent = t.scale_warn; scaleInfo.style.color = "#ef4444"; }
+            }
+        } else {
+            const char = calibCharInput.value; const mm = parseFloat(calibMmInput.value);
+            if (char && !isNaN(mm) && mm > 0) {
+                const glyph = currentOpentypeFont.charToGlyph(char);
+                if (glyph && glyph.advanceWidth > 0) {
+                    const pixelsPerFontUnit = currentFontSize / currentOpentypeFont.unitsPerEm;
+                    const glyphPx = glyph.advanceWidth * pixelsPerFontUnit;
+                    mmPerPixel = mm / glyphPx;
+                    calibLhMmInput.value = (currentFontSize * mmPerPixel).toFixed(2);
+                    scaleInfo.textContent = t.scale_format.replace('{val}', mmPerPixel.toFixed(4));
+                    scaleInfo.style.color = "var(--text-main)";
+                } else { scaleInfo.textContent = t.scale_warn; scaleInfo.style.color = "#ef4444"; }
+            }
         }
-        
-        // 关键修复：不要在这里清除 selectedPoint = null，它现在记录的是动态比例而不是绝对坐标
+        updateSlidersLimits(); 
         render();
     }
 
@@ -780,53 +1314,89 @@
         const rect = canvasContainer.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) return;
 
-        const lines = textInput.value.split('\n');
-        const fontSize = parseInt(sizeSlider.value);
-        const viewScale = fontSize / 100;
+        const visualLines = getParsedLines();
+        const baseFontSize = parseInt(sizeSlider.value);
+        const viewScale = baseFontSize / 100;
         const lhRatio = parseFloat(lhSlider.value);
         const alignment = alignSelectInput.value; 
-        const padding = 60 * viewScale; 
-        
-        const fontString = `${fontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
-        ctx.font = fontString;
+        const padding = 150 * viewScale; 
+        const dpr = window.devicePixelRatio || 1;
+        const markerLen = Math.max(15, Math.min(baseFontSize * 0.2, 35));
 
-        // 动态根据字体大小调节标线长，保证一定可读空间
-        const markerLen = Math.max(15, Math.min(fontSize * 0.2, 35));
+        let linesData = [];
+        
+        visualLines.forEach((vl, vIdx) => {
+            let currentStr = "";
+            ctx.font = `${baseFontSize}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+            
+            vl.forEach(seg => {
+                let oldW = ctx.measureText(currentStr).width;
+                currentStr += seg.text;
+                let newW = ctx.measureText(currentStr).width;
+                seg.naturalWidth = newW - oldW; 
+            });
+
+            let lineLogicalWidth = ctx.measureText(currentStr).width;
+            let rowOffsetVal = customLineOffsets[vIdx] || 0;
+            let rowOffsetPx = 0;
+            let rowOffsetDeg = 0;
+
+            if (useCircle.checked) {
+                rowOffsetDeg = rowOffsetVal;
+            } else {
+                rowOffsetPx = rowOffsetVal / mmPerPixel;
+            }
+
+            let logicalX = 0;
+            let rawMetrics = vl.map(seg => {
+                let s = customScales[seg.index] || 1.0;
+                let offsetVal = customOffsets[seg.index] || 0;
+                let vOffsetMm = customVOffsets[seg.index] || 0;
+                
+                ctx.font = `${baseFontSize * s}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                let w = (s === 1.0) ? seg.naturalWidth : ctx.measureText(seg.text).width;
+                
+                let offsetPx = 0; let offsetDeg = 0;
+                let vOffsetPx = vOffsetMm / mmPerPixel;
+
+                if (useCircle.checked) { 
+                    offsetDeg = rowOffsetDeg + offsetVal; 
+                } else { 
+                    offsetPx = rowOffsetPx + (offsetVal / mmPerPixel); 
+                }
+                
+                let segData = { seg, w, scale: s, offsetPx, offsetDeg, vOffsetPx, vOffsetMm, logicalX };
+                logicalX += w; 
+                return segData;
+            });
+            
+            linesData.push({ vl, metrics: rawMetrics, logicalWidth: logicalX, index: vIdx });
+        });
+
+        let maxLogicalWidth = 0;
+        linesData.forEach(ld => {
+            if (ld.logicalWidth > maxLogicalWidth) maxLogicalWidth = ld.logicalWidth;
+        });
 
         let contentWidth = rect.width;
         let contentHeight = rect.height;
 
         if (useCircle.checked) {
             const startR = parseInt(radiusSlider.value) * viewScale;
-            const R_step = fontSize * lhRatio;
-            const maxR = startR + (lines.length * R_step); 
-            const neededSize = (maxR * 2) + padding * 2;
+            const R_step = baseFontSize * lhRatio;
+            const maxR = startR + (visualLines.length * R_step); 
+            const neededSize = (maxR * 2) + padding * 4;
             contentWidth = Math.max(rect.width, neededSize);
             contentHeight = Math.max(rect.height, neededSize);
         } else {
-            let maxTextWidth = 0;
-            lines.forEach(line => {
-                if (line) {
-                    const w = ctx.measureText(line).width;
-                    if (w > maxTextWidth) maxTextWidth = w;
-                }
-            });
-            const maxAbsOffsetPct = customOffsets.length ? Math.max(...customOffsets.map(Math.abs)) / 100 : 0;
-            contentWidth = Math.max(rect.width, maxTextWidth + padding * 2 + (maxTextWidth * maxAbsOffsetPct) * 2);
-            contentHeight = Math.max(rect.height, lines.length * fontSize * lhRatio + padding * 2);
+            contentWidth = Math.max(rect.width, maxLogicalWidth + padding * 6);
+            contentHeight = Math.max(rect.height, (visualLines.length * baseFontSize * lhRatio) + padding * 6);
         }
         
-        const dpr = window.devicePixelRatio || 1;
-        
-        canvas.width = contentWidth * dpr;
-        canvas.height = contentHeight * dpr;
-        canvas.style.width = `${contentWidth}px`;
-        canvas.style.height = `${contentHeight}px`;
-
+        canvas.width = contentWidth * dpr; canvas.height = contentHeight * dpr;
+        canvas.style.width = `${contentWidth}px`; canvas.style.height = `${contentHeight}px`;
         svgOverlay.setAttribute('viewBox', `0 0 ${contentWidth * dpr} ${contentHeight * dpr}`);
-        svgOverlay.style.width = `${contentWidth}px`;
-        svgOverlay.style.height = `${contentHeight}px`;
-        
+        svgOverlay.style.width = `${contentWidth}px`; svgOverlay.style.height = `${contentHeight}px`;
         svgOverlay.innerHTML = '';
         const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
         svgOverlay.appendChild(defs);
@@ -836,276 +1406,499 @@
         ctx.clearRect(0, 0, contentWidth, contentHeight);
 
         if (!isExporting) {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, contentWidth, contentHeight);
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, contentWidth, contentHeight);
         }
 
-        ctx.font = fontString;
-        ctx.textBaseline = 'alphabetic';
-        ctx.fillStyle = '#111827';
-        lineData = [];
+        ctx.textBaseline = 'alphabetic'; ctx.fillStyle = '#111827';
+        lineData = []; 
 
         if (useCircle.checked) {
             let currentR = parseInt(radiusSlider.value) * viewScale;
-            const R_step = fontSize * lhRatio; 
-            const isOutIn = circleDir.value === 'in'; 
-            const bendDown = circleBend.value === 'down';
-            
-            const cx = contentWidth / 2;
-            const cy = contentHeight / 2;
+            const isOutIn = circleDir.value === 'in'; const bendDown = circleBend.value === 'down';
+            const cx = contentWidth / 2; const cy = contentHeight / 2;
+            const scx = cx * dpr; const scy = cy * dpr;
 
-            lines.forEach((line, index) => {
-                if (!line) { currentR = isOutIn ? currentR - R_step : currentR + R_step; return; }
-                
-                const totalWidthPx = ctx.measureText(line).width;
-                const maxArcLength = 2 * Math.PI * currentR;
-                
-                let startX = 0;
-                if (alignment === 'center') { startX = -totalWidthPx / 2; } 
-                else if (alignment === 'left') { startX = -maxArcLength / 2; } 
-                else if (alignment === 'right') { startX = maxArcLength / 2 - totalWidthPx; }
-                
-                const offsetDeg = customOffsets[index] || 0;
-                const offsetArcLength = (offsetDeg / 180) * Math.PI * currentR;
-                startX += offsetArcLength; 
+            linesData.forEach(ld => {
+                if (ld.metrics.length === 1 && !ld.metrics[0].seg.text) { 
+                    let currentExtraLH = customLineHeights[ld.index] || 0;
+                    let step = baseFontSize * (lhRatio + currentExtraLH);
+                    currentR = isOutIn ? currentR - step : currentR + step; 
+                    return; 
+                }
 
-                const scx = cx * dpr;
-                const scy = cy * dpr;
+                let currentExtraLH = customLineHeights[ld.index] || 0;
+                let advanceR = baseFontSize * currentExtraLH;
+                currentR = isOutIn ? currentR - advanceR : currentR + advanceR;
+
                 const sr = currentR * dpr;
+                let maxArcLength = 2 * Math.PI * currentR;
+                
+                let shiftX = 0;
+                if (alignment === 'center') { shiftX = -ld.logicalWidth / 2; } 
+                else if (alignment === 'left') { shiftX = -maxArcLength / 4; } 
+                else if (alignment === 'right') { shiftX = maxArcLength / 4 - ld.logicalWidth; }
+
+                let visualMin = Infinity;
+                let visualMax = -Infinity;
+
+                let renderGroups = []; 
+                let currentGroup = null;
+                
+                ld.metrics.forEach(m => {
+                    m.offsetPx = (m.offsetDeg / 180) * Math.PI * currentR;
+                    m.drawX = shiftX + m.logicalX + m.offsetPx;
+                    
+                    if (m.drawX < visualMin) visualMin = m.drawX;
+                    if (m.drawX + m.w > visualMax) visualMax = m.drawX + m.w;
+
+                    if (!currentGroup) {
+                        currentGroup = { text: m.seg.text, scale: m.scale, drawX: m.drawX, w: m.w, vOffsetPx: m.vOffsetPx, indices: [m.seg.index] };
+                    } else {
+                        if (m.scale === currentGroup.scale && m.vOffsetPx === currentGroup.vOffsetPx && Math.abs(m.drawX - (currentGroup.drawX + currentGroup.w)) < 0.1) {
+                            currentGroup.text += m.seg.text;
+                            currentGroup.w += m.w;
+                            currentGroup.indices.push(m.seg.index);
+                        } else {
+                            renderGroups.push(currentGroup);
+                            currentGroup = { text: m.seg.text, scale: m.scale, drawX: m.drawX, w: m.w, vOffsetPx: m.vOffsetPx, indices: [m.seg.index] };
+                        }
+                    }
+                });
+                if (currentGroup) renderGroups.push(currentGroup);
+
+                lineData.push({
+                    isCircle: true, index: ld.index, r: currentR,
+                    visualMin: visualMin, visualMax: visualMax, visualWidth: visualMax - visualMin,
+                    cx: cx, cy: cy, bendDown: bendDown
+                });
 
                 if (circleMode.value === 'vector') {
-                    const pathId = `line-path-${index}`;
+                    const circ = 2 * Math.PI * sr;
+                    let startOffsetPx = circ / 2;
+                    
+                    if (alignment === 'center') { 
+                        startOffsetPx -= (ld.logicalWidth * dpr) / 2; 
+                    } else if (alignment === 'left') { 
+                        startOffsetPx -= (circ / 4); 
+                    } else if (alignment === 'right') { 
+                        startOffsetPx += (circ / 4) - (ld.logicalWidth * dpr); 
+                    }
+
+                    const pathId = `line-path-${ld.index}`;
                     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
                     path.setAttribute('id', pathId);
-                    
-                    let arcD = "";
-                    if (bendDown) {
-                        arcD = `M ${scx} ${scy+sr} A ${sr} ${sr} 0 1 1 ${scx+0.001} ${scy+sr}`;
-                    } else {
-                        arcD = `M ${scx} ${scy-sr} A ${sr} ${sr} 0 1 0 ${scx+0.001} ${scy-sr}`;
-                    }
-                    path.setAttribute('d', arcD);
+                    let arcD = bendDown 
+                        ? `M ${scx} ${scy+sr} A ${sr} ${sr} 0 1 1 ${scx+0.001} ${scy+sr}` 
+                        : `M ${scx} ${scy-sr} A ${sr} ${sr} 0 1 0 ${scx+0.001} ${scy-sr}`;
+                    path.setAttribute('d', arcD); 
                     path.setAttribute('fill', 'none');
                     defs.appendChild(path);
 
-                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    g.setAttribute('transform', `rotate(${offsetDeg}, ${scx}, ${scy})`);
-
                     const textNode = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    textNode.style.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
-                    textNode.style.fontVariantLigatures = "contextual";
+                    textNode.style.font = `${baseFontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                    textNode.style.fontVariantLigatures = "contextual"; 
                     textNode.style.fontFeatureSettings = '"calt" 1, "liga" 1';
-                    textNode.setAttribute('fill', '#111827');
-                    
+                    textNode.setAttribute('xml:space', 'preserve'); 
+                    textNode.setAttribute('fill', '#111827'); 
+                    textNode.setAttribute('text-anchor', 'start');
+
                     const textPath = document.createElementNS("http://www.w3.org/2000/svg", "textPath");
                     textPath.setAttributeNS("http://www.w3.org/1999/xlink", "href", `#${pathId}`);
-                    
-                    if (alignment === 'center') {
-                        textPath.setAttribute('startOffset', '50%');
-                        textNode.setAttribute('text-anchor', 'middle');
-                    } else if (alignment === 'left') {
-                        textPath.setAttribute('startOffset', '0%');
-                        textNode.setAttribute('text-anchor', 'start');
-                    } else if (alignment === 'right') {
-                        textPath.setAttribute('startOffset', '100%');
-                        textNode.setAttribute('text-anchor', 'end');
-                    }
-                    
-                    textPath.textContent = line;
-                    textNode.appendChild(textPath);
-                    g.appendChild(textNode);
-                    svgOverlay.appendChild(g);
+                    textPath.setAttribute('startOffset', startOffsetPx);
 
-                } else {
-                    const metrics = ctx.measureText(line);
-                    const buffer = 2; 
-                    const bleedLeft = (metrics.actualBoundingBoxLeft || (fontSize * 0.5)) + buffer;
-                    const bleedRight = (metrics.actualBoundingBoxRight || (totalWidthPx + fontSize * 0.5)) + buffer;
+                    let prevOffsetPx = 0;
+                    let prevVOffsetPx = 0;
                     
-                    const bleedLeft_px = Math.ceil(bleedLeft * dpr);
-                    const visualWidth_px = Math.ceil((bleedLeft + bleedRight) * dpr);
+                    ld.metrics.forEach(m => {
+                        const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                        tspan.textContent = m.seg.text;
+                        
+                        let dx = m.offsetPx - prevOffsetPx;
+                        let dy = m.vOffsetPx - prevVOffsetPx;
+
+                        if (dx !== 0) tspan.setAttribute('dx', dx * dpr);
+                        if (dy !== 0) tspan.setAttribute('dy', dy * dpr);
+
+                        if (m.scale !== 1.0) {
+                            tspan.style.fontSize = `${baseFontSize * dpr * m.scale}px`;
+                        }
+                        textPath.appendChild(tspan);
+                        
+                        prevOffsetPx = m.offsetPx;
+                        prevVOffsetPx = m.vOffsetPx;
+                    });
+                    
+                    textNode.appendChild(textPath); 
+                    svgOverlay.appendChild(textNode);
+                } else {
+                    let maxS = Math.max(...renderGroups.map(m => m.scale), 1);
+                    let maxVOff = Math.max(...renderGroups.map(rg => rg.vOffsetPx), 0);
+                    let minVOff = Math.min(...renderGroups.map(rg => rg.vOffsetPx), 0);
+
+                    const H_px = Math.ceil(baseFontSize * 4.0 * maxS * dpr) + Math.ceil(maxVOff - minVOff) * dpr;
+                    let minArc = Math.min(...renderGroups.map(rg => rg.drawX));
+                    let maxArc = Math.max(...renderGroups.map(rg => rg.drawX + rg.w));
+                    let totalSpanPx = maxArc - minArc;
+                    
+                    const rasterPadding = Math.ceil(baseFontSize * 2 * maxS * dpr);
+                    const visualWidth_px = Math.ceil(totalSpanPx * dpr) + rasterPadding * 2;
 
                     const offscreen = document.createElement('canvas');
-                    const H_px = Math.ceil(fontSize * 2.5 * dpr);
-                    
-                    offscreen.width = Math.max(1, visualWidth_px);
-                    offscreen.height = Math.max(1, H_px);
+                    offscreen.width = Math.max(1, visualWidth_px); offscreen.height = Math.max(1, H_px);
                     const oCtx = offscreen.getContext('2d');
+                    oCtx.textBaseline = 'alphabetic'; oCtx.fillStyle = '#111827';
+                    const baseY = Math.ceil(baseFontSize * 2.0 * maxS * dpr) - Math.floor(minVOff * dpr);
 
-                    oCtx.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
-                    offscreen.style.fontVariantLigatures = "contextual"; 
-                    oCtx.fillStyle = '#111827';
+                    renderGroups.forEach(rg => {
+                        oCtx.font = `${baseFontSize * dpr * rg.scale}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                        offscreen.style.fontVariantLigatures = "contextual";
+                        let drawX = (rg.drawX - minArc) * dpr + rasterPadding;
+                        oCtx.fillText(rg.text, drawX, baseY + rg.vOffsetPx * dpr);
+                    });
 
-                    const baseY = Math.ceil(H_px * 0.6); 
-                    oCtx.textBaseline = 'alphabetic'; 
-                    oCtx.fillText(line, bleedLeft_px, baseY);
-
-                    ctx.save();
-                    ctx.setTransform(1, 0, 0, 1, 0, 0);
-
+                    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
                     const stripW = Math.max(1.5, Math.ceil(2 * (sr + H_px / 2) / sr));
-
                     for (let i = 0; i < visualWidth_px; i += 1) {
-                        const logical_offset_px = i - bleedLeft_px; 
-                        const x_arc_dpr = startX * dpr + logical_offset_px;
+                        const logical_offset_px = (i - rasterPadding) / dpr;
+                        const x_arc_dpr = (minArc + logical_offset_px) * dpr;
                         const theta = x_arc_dpr / sr;
-
                         let Bx, By, Tx, Ty, Nx, Ny;
                         if (bendDown) {
-                            Bx = scx + sr * Math.sin(theta);
-                            By = scy - sr * Math.cos(theta);
-                            Tx = Math.cos(theta); Ty = Math.sin(theta);
-                            Nx = -Math.sin(theta); Ny = Math.cos(theta);
+                            Bx = scx + sr * Math.sin(theta); By = scy - sr * Math.cos(theta);
+                            Tx = Math.cos(theta); Ty = Math.sin(theta); Nx = -Math.sin(theta); Ny = Math.cos(theta);
                         } else {
-                            Bx = scx + sr * Math.sin(theta);
-                            By = scy + sr * Math.cos(theta);
-                            Tx = Math.cos(theta); Ty = -Math.sin(theta);
-                            Nx = Math.sin(theta); Ny = Math.cos(theta);
+                            Bx = scx + sr * Math.sin(theta); By = scy + sr * Math.cos(theta);
+                            Tx = Math.cos(theta); Ty = -Math.sin(theta); Nx = Math.sin(theta); Ny = Math.cos(theta);
                         }
-
                         ctx.setTransform(Tx, Ty, Nx, Ny, Bx, By);
                         ctx.drawImage(offscreen, i, 0, stripW, H_px, 0, -baseY, stripW, H_px);
                     }
                     ctx.restore();
                 }
 
-                if (showLines.checked) {
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
-                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)';
-                    ctx.lineWidth = 1; ctx.stroke();
-                }
-
-                if (showCenters.checked) {
-                    const centerX = startX + totalWidthPx / 2;
-                    const distMm = (totalWidthPx / 2) * mmPerPixel;
-                    const pStart = mapPointToCircle(centerX, 0, currentR, cx, cy, bendDown);
-                    const pEnd = mapPointToCircle(centerX, markerLen, currentR, cx, cy, bendDown);
-                    drawMarker(pStart, pEnd, `${distMm.toFixed(1)} mm`, '#ef4444');
-                }
-
-                if (showSpaces.checked) {
-                    const words = line.split(' '); let currentWordX = startX;
-                    for (let i = 0; i < words.length; i++) {
-                        const word = words[i]; const wordWidth = ctx.measureText(word).width;
-                        const markerX = currentWordX + wordWidth;
-                        if (word.length > 0 || i === words.length - 1) {
-                            const distMm = (markerX - startX) * mmPerPixel;
-                            const pStart = mapPointToCircle(markerX, 0, currentR, cx, cy, bendDown);
-                            const pEnd = mapPointToCircle(markerX, markerLen, currentR, cx, cy, bendDown);
-                            drawMarker(pStart, pEnd, `${distMm.toFixed(1)} mm`, '#3b82f6');
-                        }
-                        if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
+                if (showCenters.checked && (visualMax - visualMin) > 0) {
+                    let lineMidPx = (visualMin + visualMax) / 2;
+                    const pStart = mapPointToCircle(lineMidPx, 0, currentR, cx, cy, bendDown);
+                    const pEnd = mapPointToCircle(lineMidPx, markerLen, currentR, cx, cy, bendDown);
+                    let text = "";
+                    if (showAngles.checked) {
+                        let deg = Math.atan2(pStart.x - cx, cy - pStart.y) * 180 / Math.PI;
+                        text = `${deg.toFixed(1)}°`;
+                    } else {
+                        const distMm = ((visualMax - visualMin) / 2) * mmPerPixel;
+                        text = `${distMm.toFixed(1)} mm`;
                     }
+                    drawMarker(pStart, pEnd, text, '#ef4444', true); 
                 }
 
-                lineData.push({
-                    isCircle: true, index: index, r: currentR,
-                    startX: startX, endX: startX + totalWidthPx, cx: cx, cy: cy, bendDown: bendDown
-                });
+                if (showSpaces.checked && (visualMax - visualMin) > 0) {
+                    const startP = mapPointToCircle(visualMin, 0, currentR, cx, cy, bendDown);
+                    const startPEnd = mapPointToCircle(visualMin, markerLen, currentR, cx, cy, bendDown);
+                    let startText = "";
+                    if (showAngles.checked) {
+                        let deg = Math.atan2(startP.x - cx, cy - startP.y) * 180 / Math.PI;
+                        startText = `${deg.toFixed(1)}°`;
+                    } else {
+                        startText = `0.0 mm`;
+                    }
+                    drawMarker(startP, startPEnd, startText, '#3b82f6', true);
 
+                    ld.metrics.forEach(m => {
+                        ctx.font = `${baseFontSize * m.scale}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                        let currentWordX = m.drawX;
+                        const words = m.seg.text.split(' ');
+                        for (let i = 0; i < words.length; i++) {
+                            const word = words[i]; 
+                            const wordWidth = ctx.measureText(word).width;
+                            const markerX = currentWordX + wordWidth;
+                            if (word.length > 0 || i === words.length - 1) {
+                                const pStart = mapPointToCircle(markerX, 0, currentR, cx, cy, bendDown);
+                                const pEnd = mapPointToCircle(markerX, markerLen, currentR, cx, cy, bendDown);
+                                let text = "";
+                                if (showAngles.checked) {
+                                    let deg = Math.atan2(pStart.x - cx, cy - pStart.y) * 180 / Math.PI;
+                                    text = `${deg.toFixed(1)}°`;
+                                } else {
+                                    const distMm = (markerX - visualMin) * mmPerPixel;
+                                    text = `${distMm.toFixed(1)} mm`;
+                                }
+                                drawMarker(pStart, pEnd, text, '#3b82f6', true);
+                            }
+                            if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
+                        }
+                    });
+                }
+
+                if (showVOffs.checked) {
+                    ld.metrics.forEach(m => {
+                        if (Math.abs(m.vOffsetMm) >= 0.1) {
+                            let segCenterX = m.drawX + m.w / 2;
+                            const pStart = mapPointToCircle(segCenterX, 0, currentR, cx, cy, bendDown);
+                            const pEnd = mapPointToCircle(segCenterX, m.vOffsetPx, currentR, cx, cy, bendDown);
+                            drawMarker(pStart, pEnd, `${m.vOffsetMm.toFixed(1)} mm`, '#d946ef', true, 'mid-upright');
+                        }
+                    });
+                }
+
+                if (showLines.checked) {
+                    ctx.beginPath(); ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+                }
+
+                const R_step = baseFontSize * lhRatio;
                 currentR = isOutIn ? currentR - R_step : currentR + R_step;
             });
 
-            if (showRadius.checked && lineData.length > 0) {
+            if (showSpacing.checked && lineData.length > 0) {
                 ctx.save();
                 const purple = '#8b5cf6'; ctx.strokeStyle = purple; ctx.fillStyle = purple; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
 
-                const maxR = Math.max(...lineData.map(l => l.r));
-                ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + maxR + 25); ctx.stroke(); ctx.setLineDash([]);
+                let parsedRs = [...new Set(lineData.map(l => l.r))].sort((a,b)=>a-b);
+                if (parsedRs.length > 0) {
+                    const maxR = parsedRs[parsedRs.length - 1];
+                    ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + maxR + 25); ctx.stroke(); ctx.setLineDash([]);
 
-                let prevR = 0;
-                lineData.forEach((line, i) => {
-                    const r = line.r; const markerY = cy + r;
-                    ctx.beginPath(); ctx.moveTo(cx - 6, markerY); ctx.lineTo(cx + 6, markerY); ctx.stroke();
+                    const r0 = parsedRs[0];
+                    let prevR = r0;
+                    parsedRs.forEach((r, i) => {
+                        const markerY = cy + r;
+                        ctx.beginPath(); ctx.moveTo(cx - 6, markerY); ctx.lineTo(cx + 6, markerY); ctx.stroke();
+                        
+                        ctx.font = `500 10px system-ui, -apple-system, sans-serif`; 
+                        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
 
-                    let text = '';
-                    if (i === 0) { text = `R: ${(r * mmPerPixel).toFixed(1)} mm`; } 
-                    else { const diff = Math.abs(r - prevR); text = `Δ: ${(diff * mmPerPixel).toFixed(1)} mm`; }
+                        if (i === 0) {
+                            let text = `R: ${(r * mmPerPixel).toFixed(1)} mm`;
+                            let textY = cy + r / 2;
+                            ctx.strokeText(text, cx - 10, textY);
+                            ctx.fillText(text, cx - 10, textY);
+                        } else {
+                            let delta = (r - prevR) * mmPerPixel;
+                            let total = r * mmPerPixel;
+                            let textY = cy + prevR + (r - prevR) / 2;
+                            
+                            let text1 = `Δ: ${delta.toFixed(1)} mm`;
+                            let text2 = `Σ: ${total.toFixed(1)} mm`;
 
-                    const midR = prevR + (r - prevR) / 2; const textY = cy + midR;
-                    ctx.font = `500 11.5px system-ui, -apple-system, sans-serif`; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-                    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)'; ctx.strokeText(text, cx - 10, textY);
-                    ctx.fillText(text, cx - 10, textY);
-                    prevR = r;
-                });
+                            ctx.strokeText(text1, cx - 10, textY - 6);
+                            ctx.fillText(text1, cx - 10, textY - 6);
+                            ctx.strokeText(text2, cx - 10, textY + 8);
+                            ctx.fillText(text2, cx - 10, textY + 8);
+                        }
+                        prevR = r;
+                    });
+                }
                 ctx.restore();
             }
 
         } else {
-            let currentY = fontSize + padding;
+            let currentY = baseFontSize + padding * 2;
+            let globalLeft = Infinity;
 
-            lines.forEach((line, index) => {
-                if (!line) { currentY += fontSize * lhRatio; return; }
+            linesData.forEach((ld) => {
+                if (ld.metrics.length === 0) return;
+                let shiftX = 0;
+                if (alignment === 'center') shiftX = (contentWidth - ld.logicalWidth) / 2;
+                else if (alignment === 'right') shiftX = contentWidth - padding * 3 - ld.logicalWidth;
+                else shiftX = padding * 3;
 
-                const totalWidthPx = ctx.measureText(line).width;
-                let startX = 0;
+                ld.metrics.forEach(m => {
+                    let tempDrawX = shiftX + m.logicalX + m.offsetPx;
+                    if (tempDrawX < globalLeft) globalLeft = tempDrawX;
+                });
+            });
 
-                if (alignment === 'center') { startX = (contentWidth - totalWidthPx) / 2; } 
-                else if (alignment === 'right') { startX = contentWidth - totalWidthPx - padding; } 
-                else { startX = padding; }
+            linesData.forEach((ld) => {
+                if (ld.metrics.length === 1 && !ld.metrics[0].seg.text) { 
+                    let currentExtraLH = customLineHeights[ld.index] || 0;
+                    currentY += baseFontSize * (lhRatio + currentExtraLH);
+                    return; 
+                }
 
-                const offsetPct = customOffsets[index] || 0;
-                startX += (offsetPct / 100) * totalWidthPx;
+                let currentExtraLH = customLineHeights[ld.index] || 0;
+                currentY += baseFontSize * currentExtraLH;
+
+                let shiftX = 0;
+                if (alignment === 'center') {
+                    shiftX = (contentWidth - ld.logicalWidth) / 2;
+                } else if (alignment === 'right') {
+                    shiftX = contentWidth - padding * 3 - ld.logicalWidth;
+                } else {
+                    shiftX = padding * 3;
+                }
+
+                let visualMin = Infinity;
+                let visualMax = -Infinity;
+
+                ld.metrics.forEach(m => {
+                    m.drawX = shiftX + m.logicalX + m.offsetPx;
+                    if (m.drawX < visualMin) visualMin = m.drawX;
+                    if (m.drawX + m.w > visualMax) visualMax = m.drawX + m.w;
+                });
+
+                lineData.push({
+                    isCircle: false, index: ld.index, 
+                    visualMin: visualMin, visualMax: visualMax, visualWidth: visualMax - visualMin,
+                    yMin: currentY - baseFontSize * Math.max(...ld.metrics.map(m=>m.scale)), yMax: currentY + baseFontSize * 0.3,
+                    baseY: currentY
+                });
 
                 const textNode = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                textNode.style.font = `${fontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
-                textNode.style.fontVariantLigatures = "contextual";
-                textNode.style.fontFeatureSettings = '"calt" 1, "liga" 1';
+                textNode.style.font = `${baseFontSize * dpr}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                textNode.style.fontVariantLigatures = "contextual"; textNode.style.fontFeatureSettings = '"calt" 1, "liga" 1';
+                textNode.setAttribute('xml:space', 'preserve'); 
                 textNode.setAttribute('fill', '#111827');
-                
-                textNode.setAttribute('x', startX * dpr);
+                textNode.setAttribute('x', shiftX * dpr); 
                 textNode.setAttribute('y', currentY * dpr);
-                textNode.textContent = line;
+
+                let prevOffsetPx = 0;
+                let prevVOffsetPx = 0;
+
+                ld.metrics.forEach(m => {
+                    const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                    tspan.textContent = m.seg.text;
+                    
+                    let dx = m.offsetPx - prevOffsetPx;
+                    let dy = m.vOffsetPx - prevVOffsetPx;
+
+                    if (dx !== 0) tspan.setAttribute('dx', dx * dpr);
+                    if (dy !== 0) tspan.setAttribute('dy', dy * dpr);
+                    
+                    if (m.scale !== 1.0) {
+                        tspan.style.fontSize = `${baseFontSize * dpr * m.scale}px`;
+                    }
+                    textNode.appendChild(tspan);
+                    
+                    prevOffsetPx = m.offsetPx;
+                    prevVOffsetPx = m.vOffsetPx;
+                });
                 svgOverlay.appendChild(textNode);
-                
+
+                if (showCenters.checked && (visualMax - visualMin) > 0) {
+                    const centerX = (visualMin + visualMax) / 2; 
+                    const distMm = ((visualMax - visualMin) / 2) * mmPerPixel;
+                    drawMarker({x: centerX, y: currentY}, {x: centerX, y: currentY + markerLen}, `${distMm.toFixed(1)} mm`, '#ef4444', true);
+                }
+
+                if (showSpaces.checked && (visualMax - visualMin) > 0) {
+                    drawMarker({x: visualMin, y: currentY}, {x: visualMin, y: currentY + markerLen}, `0.0 mm`, '#3b82f6', true);
+                    
+                    ld.metrics.forEach(m => {
+                        ctx.font = `${baseFontSize * m.scale}px ${isFontLoaded ? 'CustomRenderFont, ' : ''}system-ui, -apple-system, sans-serif`;
+                        let currentWordX = m.drawX;
+                        const words = m.seg.text.split(' '); 
+                        for (let i = 0; i < words.length; i++) {
+                            const word = words[i]; const wordWidth = ctx.measureText(word).width;
+                            const markerX = currentWordX + wordWidth;
+                            if (word.length > 0 || i === words.length - 1) {
+                                const distMm = (markerX - visualMin) * mmPerPixel;
+                                drawMarker({x: markerX, y: currentY}, {x: markerX, y: currentY + markerLen}, `${distMm.toFixed(1)} mm`, '#3b82f6', true);
+                            }
+                            if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
+                        }
+                    });
+                }
+
+                if (showVOffs.checked) {
+                    ld.metrics.forEach(m => {
+                        if (Math.abs(m.vOffsetMm) >= 0.1) {
+                            let segCenterX = m.drawX + m.w / 2;
+                            const pStart = { x: segCenterX, y: currentY };
+                            const pEnd = { x: segCenterX, y: currentY + m.vOffsetPx };
+                            drawMarker(pStart, pEnd, `${m.vOffsetMm.toFixed(1)} mm`, '#d946ef', true, 'mid-upright');
+                        }
+                    });
+                }
+
+                if (showLineLefts.checked && (visualMax - visualMin) > 0) {
+                    let leftDistPx = visualMin - globalLeft;
+                    if (leftDistPx > 2) { 
+                        let leftDistMm = leftDistPx * mmPerPixel;
+                        let yPos = currentY - baseFontSize * 0.4; 
+                        const pStart = { x: globalLeft, y: yPos };
+                        const pEnd = { x: visualMin, y: yPos };
+                        drawMarker(pStart, pEnd, `${leftDistMm.toFixed(1)} mm`, '#f59e0b', true, 'mid-upright');
+                    }
+                }
+
                 if (showLines.checked) {
                     ctx.beginPath(); ctx.moveTo(0, currentY); ctx.lineTo(contentWidth, currentY);
                     ctx.strokeStyle = 'rgba(239, 68, 68, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
                 }
-
-                lineData.push({
-                    isCircle: false, index: index, yMin: currentY - fontSize, yMax: currentY + 30,
-                    startX: startX, endX: startX + totalWidthPx, baseY: currentY
-                });
-
-                if (showSpaces.checked) {
-                    const words = line.split(' '); let currentWordX = startX;
-                    for (let i = 0; i < words.length; i++) {
-                        const word = words[i]; const wordWidth = ctx.measureText(word).width;
-                        const markerX = currentWordX + wordWidth;
-                        if (word.length > 0 || i === words.length - 1) {
-                            const distMm = (markerX - startX) * mmPerPixel;
-                            drawMarker({x: markerX, y: currentY}, {x: markerX, y: currentY + markerLen}, `${distMm.toFixed(1)} mm`, '#3b82f6');
-                        }
-                        if (i < words.length - 1) currentWordX += ctx.measureText(word + ' ').width;
-                    }
-                }
-
-                if (showCenters.checked) {
-                    const centerX = startX + totalWidthPx / 2;
-                    const distMm = (totalWidthPx / 2) * mmPerPixel;
-                    drawMarker({x: centerX, y: currentY}, {x: centerX, y: currentY + markerLen}, `${distMm.toFixed(1)} mm`, '#ef4444');
-                }
-
-                currentY += fontSize * lhRatio;
+                
+                currentY += baseFontSize * lhRatio;
             });
+
+            if (showSpacing.checked && lineData.length > 0) {
+                ctx.save();
+                const purple = '#8b5cf6'; ctx.strokeStyle = purple; ctx.fillStyle = purple; ctx.lineWidth = 1;
+                
+                let axisX = Math.min(...lineData.map(l => l.visualMin)) - 30;
+                if (axisX < 10) axisX = 10;
+
+                let uniqueYs = [...new Set(lineData.map(l => l.baseY))].sort((a, b) => a - b);
+                
+                if (uniqueYs.length > 0) {
+                    const minY = uniqueYs[0];
+                    const maxY = uniqueYs[uniqueYs.length - 1];
+
+                    ctx.beginPath(); ctx.arc(axisX, minY, 3, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.setLineDash([4, 4]); ctx.moveTo(axisX, minY); ctx.lineTo(axisX, maxY + 25); ctx.stroke(); ctx.setLineDash([]);
+
+                    const y0 = uniqueYs[0];
+                    let prevY = y0;
+                    
+                    uniqueYs.forEach((y, i) => {
+                        ctx.beginPath(); ctx.moveTo(axisX - 6, y); ctx.lineTo(axisX + 6, y); ctx.stroke();
+                        
+                        ctx.font = `500 10px system-ui, -apple-system, sans-serif`; 
+                        ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+                        ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+
+                        if (i === 0) {
+                            let text = `Σ: 0.0 mm`;
+                            ctx.strokeText(text, axisX - 10, y);
+                            ctx.fillText(text, axisX - 10, y);
+                        } else {
+                            let delta = (y - prevY) * mmPerPixel;
+                            let total = (y - y0) * mmPerPixel;
+                            let textY = prevY + (y - prevY) / 2;
+                            
+                            let text1 = `Δ: ${delta.toFixed(1)} mm`;
+                            let text2 = `Σ: ${total.toFixed(1)} mm`;
+
+                            ctx.strokeText(text1, axisX - 10, textY - 6);
+                            ctx.fillText(text1, axisX - 10, textY - 6);
+                            ctx.strokeText(text2, axisX - 10, textY + 8);
+                            ctx.fillText(text2, axisX - 10, textY + 8);
+                        }
+                        prevY = y;
+                    });
+                }
+                ctx.restore();
+            }
         }
         
-        // 最后绘制自定义的标线（解耦缩放后的偏移物理单位）
         if (selectedPoint) {
-            const line = lineData.find(l => l.index === selectedPoint.lineIndex);
-            if (line) {
+            const mLine = lineData.find(l => l.index === selectedPoint.lineIndex);
+            if (mLine) {
                 const distPx = selectedPoint.distMm / mmPerPixel;
-                const markerX = line.startX + distPx;
-                
-                if (line.isCircle) {
-                    const pStart = mapPointToCircle(markerX, 0, line.r, line.cx, line.cy, line.bendDown);
-                    const pEnd = mapPointToCircle(markerX, markerLen, line.r, line.cx, line.cy, line.bendDown);
-                    drawMarker(pStart, pEnd, `${selectedPoint.distMm.toFixed(2)} mm`, '#10b981', true);
+                const markerX = mLine.visualMin + distPx;
+                if (mLine.isCircle) {
+                    const pStart = mapPointToCircle(markerX, 0, mLine.r, mLine.cx, mLine.cy, mLine.bendDown);
+                    const pEnd = mapPointToCircle(markerX, markerLen, mLine.r, mLine.cx, mLine.cy, mLine.bendDown);
+                    let text = "";
+                    if (showAngles.checked) {
+                        let deg = Math.atan2(pStart.x - mLine.cx, mLine.cy - pStart.y) * 180 / Math.PI;
+                        text = `${deg.toFixed(1)}°`;
+                    } else {
+                        text = `${selectedPoint.distMm.toFixed(2)} mm`;
+                    }
+                    drawMarker(pStart, pEnd, text, '#10b981', false);
                 } else {
-                    drawMarker({x: markerX, y: line.baseY}, {x: markerX, y: line.baseY + markerLen}, `${selectedPoint.distMm.toFixed(2)} mm`, '#10b981', true);
+                    drawMarker({x: markerX, y: mLine.baseY}, {x: markerX, y: mLine.baseY + markerLen}, `${selectedPoint.distMm.toFixed(2)} mm`, '#10b981', false);
                 }
             }
         }
@@ -1114,64 +1907,51 @@
         saveSettings();
     }
 
-    // 全新且完善方向向量的 DrawMarker 逻辑
-    function drawMarker(pStart, pEnd, text, color, isCustom = false) {
+    function drawMarker(pStart, pEnd, text, color, isDashed = true, labelStyle = 'default') {
         ctx.save();
-        const dotRadius = isCustom ? 3 : 2.5; 
-        const fontSize = 10;
+        const dotRadius = isDashed ? 2.5 : 3.5; const fontSize = 10;
         
-        // 画线（从辅助线起点画向数字终点）
-        ctx.beginPath(); 
-        ctx.moveTo(pStart.x, pStart.y); 
-        ctx.lineTo(pEnd.x, pEnd.y);
-        ctx.strokeStyle = color; 
-        ctx.lineWidth = isCustom ? 1.5 : 1; 
-        ctx.setLineDash(isCustom ? [] : [3, 3]); 
-        ctx.stroke(); 
-        ctx.setLineDash([]); 
+        ctx.beginPath(); ctx.moveTo(pStart.x, pStart.y); ctx.lineTo(pEnd.x, pEnd.y);
+        ctx.strokeStyle = color; ctx.lineWidth = isDashed ? 1 : 1.5; 
+        ctx.setLineDash(isDashed ? [3, 3] : []); ctx.stroke(); ctx.setLineDash([]); 
 
-        // 只在起点（辅助线上）绘制点
-        ctx.fillStyle = color; 
-        ctx.beginPath(); 
-        ctx.arc(pStart.x, pStart.y, dotRadius, 0, Math.PI * 2); 
-        ctx.fill();
+        ctx.fillStyle = color; ctx.beginPath(); ctx.arc(pStart.x, pStart.y, dotRadius, 0, Math.PI * 2); ctx.fill();
         
-        // 算出直线的方向向量
-        const dist = Math.hypot(pEnd.x - pStart.x, pEnd.y - pStart.y);
-        const nx = (pEnd.x - pStart.x) / dist;
-        const ny = (pEnd.y - pStart.y) / dist;
+        if (labelStyle === 'mid-upright') {
+            const midX = (pStart.x + pEnd.x) / 2;
+            const midY = (pStart.y + pEnd.y) / 2;
+            ctx.translate(midX, midY); 
+            
+            ctx.font = `500 ${fontSize}px system-ui, -apple-system, sans-serif`; 
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+            ctx.lineJoin = 'round'; ctx.miterLimit = 2; ctx.lineWidth = 2; 
 
-        // 让文字中心顺着辅助线的延长线再推后一定的距离(8px)，使得虚线末端和文字有空隙
-        const pushDist = 8;
-        const textAnchorX = pEnd.x + nx * pushDist;
-        const textAnchorY = pEnd.y + ny * pushDist;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.strokeText(text, 0, 0); 
+            ctx.fillStyle = color; ctx.fillText(text, 0, 0);
+        } else {
+            const dist = Math.hypot(pEnd.x - pStart.x, pEnd.y - pStart.y);
+            const nx = dist === 0 ? 0 : (pEnd.x - pStart.x) / dist; 
+            const ny = dist === 0 ? 0 : (pEnd.y - pStart.y) / dist;
 
-        ctx.translate(textAnchorX, textAnchorY);
+            const pushDist = 8;
+            const textAnchorX = pEnd.x + nx * pushDist; const textAnchorY = pEnd.y + ny * pushDist;
 
-        // 让文字垂直于测量线，并判断不要上下颠倒
-        let angle = Math.atan2(ny, nx) - Math.PI / 2; 
-        
-        while (angle > Math.PI) angle -= Math.PI * 2;
-        while (angle < -Math.PI) angle += Math.PI * 2;
-        if (angle > Math.PI / 2 || angle < -Math.PI / 2) {
-            angle += Math.PI; // 防倒置翻转
+            ctx.translate(textAnchorX, textAnchorY);
+            let angle = Math.atan2(ny, nx) - Math.PI / 2; 
+            
+            while (angle > Math.PI) angle -= Math.PI * 2;
+            while (angle < -Math.PI) angle += Math.PI * 2;
+            if (angle > Math.PI / 2 || angle < -Math.PI / 2) angle += Math.PI; 
+
+            ctx.rotate(angle);
+            
+            ctx.font = `500 ${fontSize}px system-ui, -apple-system, sans-serif`; 
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+            ctx.lineJoin = 'round'; ctx.miterLimit = 2; ctx.lineWidth = 2; 
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.strokeText(text, 0, 0); 
+            ctx.fillStyle = color; ctx.fillText(text, 0, 0);
         }
-
-        ctx.rotate(angle);
-        
-        ctx.font = `400 ${fontSize}px system-ui, -apple-system, sans-serif`; 
-        ctx.textAlign = 'center'; 
-        ctx.textBaseline = 'middle'; 
-        ctx.lineJoin = 'round'; 
-        ctx.miterLimit = 2; 
-        ctx.lineWidth = 2; 
-
-        // 绘制带白边的文字
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; 
-        ctx.strokeText(text, 0, 0); 
-        ctx.fillStyle = color; 
-        ctx.fillText(text, 0, 0);
-        
         ctx.restore();
     }
 
@@ -1180,35 +1960,44 @@
         const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
 
         if (useCircle.checked) {
-            let closestLine = null; let minDist = Infinity; let clickTheta = 0;
-            lineData.forEach(line => {
-                const dx = mouseX - line.cx; const dy = mouseY - line.cy;
+            let bestLine = null; let minDistance = Infinity; let finalClickedX = 0;
+            
+            lineData.forEach(mLine => {
+                const dx = mouseX - mLine.cx; const dy = mouseY - mLine.cy;
                 const distFromCenter = Math.sqrt(dx*dx + dy*dy);
-                const rDiff = Math.abs(distFromCenter - line.r);
-                if (rDiff < minDist && rDiff < 40) {
-                    minDist = rDiff; closestLine = line;
-                    clickTheta = line.bendDown ? Math.atan2(dx, -dy) : Math.atan2(dx, dy);
+                const rDiff = Math.abs(distFromCenter - mLine.r);
+                
+                if (rDiff < 40) {
+                    let theta = mLine.bendDown ? Math.atan2(dx, -dy) : Math.atan2(dx, dy);
+                    let clickedX = theta * mLine.r;
+                    const circ = 2 * Math.PI * mLine.r;
+                    
+                    while (clickedX < mLine.visualMin - circ/2) clickedX += circ;
+                    while (clickedX > mLine.visualMin + circ/2) clickedX -= circ;
+                    
+                    if (clickedX >= mLine.visualMin - 10 && clickedX <= mLine.visualMax + 10) {
+                         if (rDiff < minDistance) {
+                             minDistance = rDiff; bestLine = mLine;
+                             finalClickedX = Math.max(mLine.visualMin, Math.min(clickedX, mLine.visualMax));
+                         }
+                    }
                 }
             });
 
-            if (closestLine) {
-                let clickedX = clickTheta * closestLine.r;
-                const circ = 2 * Math.PI * closestLine.r;
-                while (clickedX < closestLine.startX - circ/2) clickedX += circ;
-                while (clickedX > closestLine.startX + circ/2) clickedX -= circ;
-
-                const clampedX = Math.max(closestLine.startX, Math.min(clickedX, closestLine.endX));
-                const distPx = clampedX - closestLine.startX; 
+            if (bestLine) {
+                const distPx = finalClickedX - bestLine.visualMin; 
                 const distMm = distPx * mmPerPixel;
-                // 仅记录相对物理单位，随缩放自由转化
-                selectedPoint = { lineIndex: closestLine.index, distMm: distMm };
+                selectedPoint = { lineIndex: bestLine.index, distMm: distMm };
                 render();
             }
         } else {
-            const clickedLine = lineData.find(line => mouseY >= line.yMin && mouseY <= line.yMax);
+            const clickedLine = lineData.find(mLine => 
+                mouseY >= mLine.yMin && mouseY <= mLine.yMax && 
+                mouseX >= mLine.visualMin - 20 && mouseX <= mLine.visualMax + 20
+            );
             if (clickedLine) {
-                const clampedX = Math.max(clickedLine.startX, Math.min(mouseX, clickedLine.endX));
-                const distPx = clampedX - clickedLine.startX; 
+                const clampedX = Math.max(clickedLine.visualMin, Math.min(mouseX, clickedLine.visualMax));
+                const distPx = clampedX - clickedLine.visualMin; 
                 const distMm = distPx * mmPerPixel;
                 selectedPoint = { lineIndex: clickedLine.index, distMm: distMm };
                 render();
@@ -1268,8 +2057,8 @@
 
     loadSettings();
     updateLanguage(); 
-    updateOffsetsUI(); 
-    updateScaleAndRender(); 
+    updateSegmentsUI(); 
+    updateScaleAndRender('initial'); 
 </script>
 
 </body>
