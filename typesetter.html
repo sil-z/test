@@ -76,6 +76,7 @@
         .btn:hover { background: #e5e7eb; }
         .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
         .btn-primary:hover { background: #333; }
+        .btn-large { height: 44px; font-size: 14px; padding: 0 24px; font-weight: 600; }
 
         #langBtn { width: 56px; height: 26px; padding: 0; }
 
@@ -87,19 +88,48 @@
             height: 16px; line-height: 16px;
         }
 
-        input[type="text"], input[type="number"]:not(.control-num), textarea {
+        input[type="text"], input[type="number"]:not(.control-num) {
             width: 100%; font-size: 13px; padding: 8px 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
             background-color: #fafafa; color: var(--text-main);
             transition: var(--transition); font-family: var(--font-stack); 
         }
-        
-        input[type="text"]:focus, input[type="number"]:not(.control-num):focus, textarea:focus {
+        input[type="text"]:focus, input[type="number"]:not(.control-num):focus {
             outline: none; border-color: #a1a1aa; background-color: #fff;
         }
-        
-        textarea { resize: vertical; min-height: 70px; line-height: 1.5; white-space: pre; }
+
+        /* ----- Editable Textarea Auto-expand & Returns ----- */
+        .textarea-wrapper {
+            position: relative; width: 100%; min-height: 70px;
+            background-color: #fafafa; border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm); transition: var(--transition);
+            box-sizing: border-box; cursor: text;
+        }
+        .textarea-wrapper:focus-within {
+            background-color: #fff; border-color: #a1a1aa;
+        }
+        .text-backdrop {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            padding: 8px 10px; font-size: 13px; font-family: var(--font-stack);
+            line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;
+            color: transparent; pointer-events: none; z-index: 1;
+            overflow: hidden; margin: 0; border: none;
+        }
+        .text-backdrop .ret {
+            display: inline-block; width: 0; overflow: visible; white-space: nowrap;
+            color: #d1d5db; font-family: monospace; font-size: 12px; margin-left: 2px;
+            pointer-events: none; user-select: none;
+        }
+        #textInput {
+            display: block; width: 100%; height: 100%; min-height: 70px;
+            padding: 8px 10px; font-size: 13px; font-family: var(--font-stack);
+            line-height: 1.5; white-space: pre-wrap; word-wrap: break-word;
+            background: transparent; color: var(--text-main);
+            border: none; outline: none; resize: none; overflow-y: hidden;
+            z-index: 2; position: relative; caret-color: var(--text-main);
+            box-sizing: border-box; margin: 0;
+        }
         
         .custom-select-container { position: relative; width: 100%; font-family: var(--font-stack); }
         .custom-select-trigger {
@@ -282,6 +312,7 @@
 
         .is-panning canvas { cursor: grabbing !important; }
 
+        /* 全局滚动条样式，同样适用于帮助框内的滚动 */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
@@ -302,6 +333,59 @@
             background: #f3f4f6; color: var(--text-main); border-color: var(--border-color); 
         }
         .reset-line-btn svg { width: 12px; height: 12px; opacity: 0.7; }
+
+        /* ----- Modal overlay CSS (固定大小、内部滚动、解耦排版) ----- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(2px);
+            z-index: 9999; display: flex; align-items: center; justify-content: center;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background: var(--bg-panel); border-radius: var(--radius-md);
+            width: 520px; height: 580px; /* 固定的悬浮框大小 */
+            max-width: 90vw; max-height: 90vh; /* 响应式降级 */
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            display: flex; flex-direction: column; overflow: hidden; /* 防止圆角被内部元素破坏 */
+            transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.show .modal-content { transform: translateY(0); }
+        
+        .modal-header {
+            padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+            background: var(--bg-panel); z-index: 2;
+        }
+        .modal-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+        .modal-close {
+            background: transparent; border: none; font-size: 24px; color: var(--text-muted);
+            cursor: pointer; line-height: 1; padding: 4px; border-radius: 4px; transition: all 0.2s;
+        }
+        .modal-close:hover { background: #f3f4f6; color: var(--text-main); }
+        
+        /* 文本溢出滚动区 */
+        .modal-body {
+            padding: 24px; overflow-y: auto; flex-grow: 1; background: #fafafa;
+        }
+        
+        /* 专用于长文本、文档的排版封装样式，便于你直接用标签写内容 */
+        .help-article {
+            font-size: 14px; line-height: 1.6; color: var(--text-main); user-select: text;
+        }
+        .help-article h3 { font-size: 15px; font-weight: 600; margin: 0 0 12px 0; color: var(--accent); }
+        .help-article h3:not(:first-child) { margin-top: 24px; }
+        .help-article p { margin: 0 0 16px 0; }
+        .help-article ul { padding-left: 20px; margin: 0 0 16px 0; }
+        .help-article li { margin-bottom: 8px; }
+        .help-article code { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 13px; color: #ef4444; }
+        .help-article b, .help-article strong { font-weight: 600; color: var(--text-main); }
+        
+        /* 固定在底部的 Footer */
+        .modal-footer {
+            padding: 20px 24px; border-top: 1px solid var(--border-color);
+            background: var(--bg-panel); flex-shrink: 0; z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -327,7 +411,11 @@
 
             <div class="property-group">
                 <span class="property-title" data-i18n="section_text">Content & Layout</span>
-                <textarea id="textInput" placeholder="" title="Use \ for inline segmenting, \\ for a literal slash"></textarea>
+                
+                <div class="textarea-wrapper">
+                    <div id="textBackdrop" class="text-backdrop"></div>
+                    <textarea id="textInput" placeholder="" title="Use \ for inline segmenting, \\ for a literal slash"></textarea>
+                </div>
                 
                 <div class="grid-row" style="margin-top: 4px;">
                     <div>
@@ -457,7 +545,7 @@
             </div>
 
             <div class="property-group">
-                <span class="property-title" data-i18n="section_overlay">Measure</span>
+                <span class="property-title" data-i18n="section_overlay">Measurement</span>
                 <div class="toggle-row">
                     <span class="toggle-label" data-i18n="overlay_lines">Baselines</span>
                     <label class="switch">
@@ -505,7 +593,7 @@
         
         <div class="panel-box panel-footer">
             <button class="btn" id="exportBtn" style="width: 100%;" data-i18n="btn_export">Export to PNG</button>
-            <a href="https://sil-z.github.io/" target="_blank" class="btn btn-primary" style="width: 100%;" data-i18n="btn_website">Personal Website</a>
+            <button class="btn btn-primary" id="helpBtn" style="width: 100%;" data-i18n="btn_help">Help & About</button>
         </div>
     </div>
 
@@ -513,6 +601,65 @@
         <div id="scrollWrapper">
             <canvas id="canvas"></canvas>
             <svg id="svgOverlay" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"></svg>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="helpModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 data-i18n="help_title">Help & About</h2>
+            <button class="modal-close" id="closeModalBtn">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <article class="help-article" id="helpDocEN">
+                <h3>Overview</h3>
+                <p>This is a typesetting tool designed for calligraphy.</p>
+                <p>Normally, to ensure that your writing on paper meets your expectations in terms of layout and visual effect, you would need to draft your work first. But with this tool, you can see exactly what the final piece will look like without having to write a single draft.</p>
+                
+                <h3>User Guide</h3>
+                <ul>
+                    <li>Upload a calligraphy font in "Font Source" with kerning that matches your handwriting habits. Since the focus is on typesetting, even if you can't find a perfectly matching calligraphy font, a font containing just the kerning data will still be useful.</li>
+                    <li>I have provided a default Roundhand font, though it may not perfectly match your personal handwriting style.</li>
+                    <li>Enter the text you want to typeset in the "Content & Layout" text box. Use a backslash <code>\</code> to segment content within a single line, and use <code>\\</code> to output a literal backslash.</li>
+                    <li>Segmenting allows you to customize the size and offset of each segment individually, but width measurements are calculated based on the entire line, not the individual segments.</li>
+                    <li>Press and hold the middle mouse button to pan/drag the canvas on the right, and use the mouse scroll wheel to zoom in and out.</li>
+                    <li>Set the measurement scale in "Calibration". By telling the program the actual physical width of a reference character in your handwriting, the program can calculate the correct measurement values. You can also calibrate based on line height instead of character width. Note that a character's width in a font actually refers to its advance width (how far the cursor moves), not necessarily its visual glyph width. The same applies to line height; the value you need to input might not be the theoretical x-height.</li>
+                    <li>Adjust any other layout settings you need in the rest of the "Content & Layout" section. Expand a line's settings to adjust its individual segments.</li>
+                    <li>Toggle the measurement options you need (or don't need) on or off in the "Measurement" section.</li>
+                    <li>You can enable circular layout, which organizes multiple lines of text into concentric circles. Due to the limitations of JavaScript capabilities in browsers, both rendering modes have their respective drawbacks. In particular, setting both the arc radius and the canvas zoom to excessively large values simultaneously may cause the Canvas to go blank or lag.</li>
+                </ul>
+                
+                <h3>About the Author</h3>
+                <p>Silhouette Z has been learning pointed pen calligraphy since 2021, and found type design very interesting in 2025.</p>
+                <p>This typesetter was essentially put together in three days, so any bug reports or feature suggestions are highly welcomed and appreciated.</p>
+            </article>
+            
+            <article class="help-article" id="helpDocZH" style="display: none;">
+                <h3>概览</h3>
+                <p>这是一个用于西文书法的排版器。</p>
+                <p>通常来说，为了确保写在纸上的东西在排版和视觉效果上符合预期，你需要为你的作品打一遍草稿。但现在有了这东西，你不用打草稿就知道这张字写出来应该是什么样了。</p>
+                <h3>操作指南</h3>
+                <ul>
+                    <li>在“字体源”中上传一个 kerning 与你的手写习惯一致的书法字体。因为重点是排版，因此即使找不到合适的书法字体，一个只有 kerning 数据的字体也是有用的。</li>
+                    <li>我提供了一个默认的 Roundhand 字体，它可能不符合你的书写习惯。</li>
+                    <li>在“内容与排版”的文本框中输入需要排版的文本。使用反斜杠 <code>\</code> 对单行内容进行切分，使用 <code>\\</code> 表示反斜杠本身。</li>
+                    <li>切分使你可以自定义每个切分的大小和偏移，但宽度测量基于整行，而不是切分。</li>
+                    <li>按下鼠标中键拖动右侧画布，使用鼠标滚轮缩放画布。</li>
+                    <li>在“校准”中设置测量比例，通过告诉程序某个基准字符在你的字迹中的实际宽度让程序能够计算正确的测量数值。你也可以依据行距校准，而不是字宽。注意字符在字体中的宽度实际上意味着其使光标前进的距离，而不是某个视觉上的字形宽度。行距同理，你需要输入的行距可能并不是理论上的 x-height。</li>
+                    <li>在“内容与排版”的剩余部分中进行其他你需要的排版设置。展开行设置以进行本行切分设置。</li>
+                    <li>在“测量”中打开（关闭）你（不）需要的测量选项。</li>
+                    <li>可以启用环形排版，多行文字将组织成同心圆。由于浏览器上 Javascript 能力的限制，使用两种渲染模式分别有一些缺点，特别需要注意的是同时将圆弧半径和画布缩放设置为过大的值可能导致 Canvas 白屏和卡顿。</li>
+                </ul>
+                <h3>关于作者</h3>
+                <p>Silhouette Z，自 2021 年开始学习点尖书法，在 2025 年发现字体设计很有意思。</p>
+                <p>这个排版器基本上是三天之内弄出来的，非常欢迎和期待任何关于 bug 的提醒和对功能的建议。</p>
+            </article>
+        </div>
+        
+        <div class="modal-footer">
+            <a href="https://sil-z.github.io/about/" target="_blank" class="btn btn-primary btn-large" style="width: 100%;" data-i18n="btn_website">Personal Website</a>
         </div>
     </div>
 </div>
@@ -533,7 +680,7 @@
             status_error: "Failed to load font", scale_format: "Scale: 1px ≈ {val} mm", scale_warn: "Metric unavailable",
             section_overlay: "Measurement", overlay_lines: "Baselines", overlay_center: "Midpoint", overlay_space: "By Word", 
             overlay_spacing: "Line Spacing", overlay_voffs: "Vertical Offsets", overlay_line_lefts: "Left Margins", overlay_angles: "Enable Angle Measurement",
-            btn_export: "Export to PNG", btn_website: "Personal Website",
+            btn_export: "Export to PNG", btn_help: "Help & About", help_title: "Help & About", btn_website: "Personal Website",
             seg_label: "S", seg_empty: "(empty)",
             ctrl_hoff: "Horizontal Offset", ctrl_voff: "Vertical Offset", ctrl_sc: "Scale", ctrl_roff: "Whole-line Offset", ctrl_dlh: "Extra Line Spacing",
             line_label: "L", title_hoff: "Horizontal Offset", title_voff: "Vertical Offset", title_sc: "Scale", title_roff: "Whole-line Offset", title_dlh: "Extra Line Spacing"
@@ -552,7 +699,7 @@
             status_error: "加载失败", scale_format: "比例：1px ≈ {val} mm", scale_warn: "无法读取",
             section_overlay: "测量", overlay_lines: "基线", overlay_center: "中轴线", overlay_space: "逐词间距", 
             overlay_spacing: "行间距", overlay_voffs: "垂直偏移", overlay_line_lefts: "左侧边距", overlay_angles: "启用角度测量",
-            btn_export: "导出为 PNG", btn_website: "个人主页",
+            btn_export: "导出为 PNG", btn_help: "帮助 & 关于", help_title: "帮助 & 关于", btn_website: "个人主页",
             seg_label: "S", seg_empty: "（空）",
             ctrl_hoff: "水平偏移", ctrl_voff: "垂直偏移", ctrl_sc: "缩放", ctrl_roff: "整行偏移", ctrl_dlh: "额外行距",
             line_label: "L", title_hoff: "水平偏移", title_voff: "垂直偏移", title_sc: "缩放", title_roff: "整行偏移", title_dlh: "额外行距"
@@ -584,6 +731,7 @@
     const ctx = canvas.getContext('2d');
     
     const textInput = document.getElementById('textInput');
+    const textBackdrop = document.getElementById('textBackdrop');
     const calibCharInput = document.getElementById('calibChar');
     const calibMmInput = document.getElementById('calibMm');
     const calibLhMmInput = document.getElementById('calibLhMm');
@@ -608,6 +756,40 @@
     const circleDir = document.getElementById('circleDir');
     const circleBend = document.getElementById('circleBend');
     const circleMode = document.getElementById('circleMode'); 
+
+    // Handle Modal Logic
+    const helpModal = document.getElementById('helpModal');
+    const helpBtn = document.getElementById('helpBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    helpBtn.addEventListener('click', () => {
+        helpModal.classList.add('show');
+        document.getElementById('helpDocEN').style.display = currentLang === 'en' ? 'block' : 'none';
+        document.getElementById('helpDocZH').style.display = currentLang === 'zh' ? 'block' : 'none';
+    });
+
+    closeModalBtn.addEventListener('click', () => helpModal.classList.remove('show'));
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) helpModal.classList.remove('show');
+    });
+
+    // Update Textarea with Auto-expand & Returns
+    function updateTextarea() {
+        textInput.style.height = '70px'; // reset to calculate correct scroll height
+        const newHeight = Math.max(70, textInput.scrollHeight);
+        textInput.style.height = newHeight + 'px';
+        textBackdrop.style.height = newHeight + 'px';
+
+        let text = textInput.value;
+        let escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        escaped = escaped.replace(/\n/g, '<span class="ret">↵</span>\n');
+        escaped += '<span class="ret">↵</span>';
+        
+        textBackdrop.innerHTML = escaped;
+    }
+    
+    // Ensure backdrop updates if window resizes
+    window.addEventListener('resize', updateTextarea);
 
     function getParsedLines() {
         const raw = textInput.value.replace(/\r\n/g, '\n');
@@ -738,6 +920,7 @@
                 textInput.value = "Oh you look so beautiful tonight\nIn the city\\ of blinding lights";
             }
         }
+        updateTextarea();
         previousSegmentsStrings = getParsedLines().flat().map(s => s.text);
     }
 
@@ -838,7 +1021,9 @@
         }
     }, { passive: false });
 
+    // Handle typing events and syncing backdrop
     textInput.addEventListener('input', () => { 
+        updateTextarea();
         selectedPoint = null; 
         const newSegs = getParsedLines().flat().map(s => s.text);
         const oldSegs = previousSegmentsStrings;
